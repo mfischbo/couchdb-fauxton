@@ -15,43 +15,50 @@ import FauxtonAPI from "../../core/api";
 var Replication = {};
 
 // these are probably dupes from the database modules. I'm going to keep them separate for now
-Replication.DBModel = Backbone.Model.extend({
-  label: function () {
-    // for autocomplete
-    return this.get('name');
-  }
-});
+//Replication.DBModel = Backbone.Model.extend({
+//  label: function () {
+//    // for autocomplete
+//    return this.get('name');
+//  }
+//});
+//
+//Replication.DBList = Backbone.Collection.extend({
+//  model: Replication.DBModel,
+//  url: function () {
+//    return app.host + '/_all_dbs';
+//  },
+//  parse: function (resp) {
+//    // TODO: pagination!
+//    return _.map(resp, function (database) {
+//      return {
+//        id: database,
+//        name: database
+//      };
+//    });
+//  }
+//});
 
-Replication.DBList = Backbone.Collection.extend({
-  model: Replication.DBModel,
-  url: function () {
-    return app.host + '/_all_dbs';
-  },
-  parse: function (resp) {
-    // TODO: pagination!
-    return _.map(resp, function (database) {
-      return {
-        id: database,
-        name: database
-      };
-    });
-  }
-});
+//Replication.Task = Backbone.Model.extend({});
+//
+//Replication.Tasks = Backbone.Collection.extend({
+//  model: Replication.Task,
+//  url: function () {
+//    return app.host + '/_active_tasks';
+//  },
+//  parse: function (resp) {
+//    //only want replication tasks to return
+//    return _.filter(resp, function (task) {
+//      return task.type === 'replication';
+//    });
+//  }
+//});
 
-Replication.Task = Backbone.Model.extend({});
-
-Replication.Tasks = Backbone.Collection.extend({
-  model: Replication.Task,
-  url: function () {
-    return app.host + '/_active_tasks';
-  },
-  parse: function (resp) {
-    //only want replication tasks to return
-    return _.filter(resp, function (task) {
-      return task.type === 'replication';
-    });
-  }
-});
+//Replication.Replicate = Backbone.Model.extend({
+//  documentation: FauxtonAPI.constants.DOC_URLS.REPLICATION,
+//  url: function () {
+//    return window.location.origin + '/_replicate';
+//  }
+//});
 
 Replication.Replicate = Backbone.Model.extend({
   documentation: FauxtonAPI.constants.DOC_URLS.REPLICATION,
