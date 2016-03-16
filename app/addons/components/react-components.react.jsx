@@ -1,3 +1,4 @@
+
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy of
 // the License at
@@ -227,7 +228,14 @@ var StyledSelect = React.createClass({
   propTypes: {
     selectValue: React.PropTypes.string.isRequired,
     selectId: React.PropTypes.string.isRequired,
-    selectChange: React.PropTypes.func.isRequired
+    selectChange: React.PropTypes.func.isRequired,
+    autoFocus: React.PropTypes.bool
+  },
+
+  getDefaultProps: function () {
+    return {
+      autoFocus: false
+    };
   },
 
   render: function () {
@@ -240,6 +248,7 @@ var StyledSelect = React.createClass({
             id={this.props.selectId}
             className={this.props.selectValue}
             onChange={this.props.selectChange}
+            autoFocus={this.props.autoFocus}
           >
             {this.props.selectContent}
           </select>
@@ -1116,7 +1125,8 @@ var ConfirmButton = React.createClass({
     style: React.PropTypes.object,
     buttonType: React.PropTypes.string,
     'data-id': React.PropTypes.string,
-    onClick: React.PropTypes.func
+    onClick: React.PropTypes.func,
+    disabled: React.PropTypes.bool
   },
 
   getDefaultProps: function () {
@@ -1126,7 +1136,8 @@ var ConfirmButton = React.createClass({
       buttonType: 'btn-success',
       style: {},
       'data-id': null,
-      onClick: function () { }
+      onClick: function () { },
+      disabled: false
     };
   },
 
@@ -1140,7 +1151,7 @@ var ConfirmButton = React.createClass({
   },
 
   render: function () {
-    const { onClick, buttonType, id, style, text } = this.props;
+    const { onClick, buttonType, id, style, text, disabled } = this.props;
     return (
       <button
         onClick={onClick}
@@ -1149,6 +1160,7 @@ var ConfirmButton = React.createClass({
         className={'btn save ' + buttonType}
         id={id}
         style={style}
+        disabled={disabled}
       >
         {this.getIcon()}
         {text}
@@ -1156,6 +1168,61 @@ var ConfirmButton = React.createClass({
     );
   }
 });
+
+
+// A simple, unstyled typeahead widget that can be used for typeahead on any arbitrary strings.
+// This should replace the more specific <JumpToDatabaseWidget />
+var TypeaheadField = React.createClass({
+  propTypes: {
+    list: React.PropTypes.array.isRequired,
+    value: React.PropTypes.string.isRequired,
+    onChange: React.PropTypes.func.isRequired,
+    placeholder: React.PropTypes.string,
+    autoFocus: React.PropTypes.bool
+  },
+
+  getDefaultProps: function () {
+    return {
+      placeholder: 'Type ahead',
+      autoFocus: false
+    };
+  },
+
+  componentDidMount: function () {
+    this.updateTypeahead();
+  },
+
+  updateTypeahead: function () {
+    $(ReactDOM.findDOMNode(this.refs.field)).typeahead({
+      source: this.props.list,
+      updater: function (item) {
+        this.onSelect(item);
+        return item;
+      }.bind(this)
+    });
+  },
+
+  onChange: function (e) {
+    e.preventDefault();
+    this.props.onChange(e.target.value);
+  },
+
+  onSelect: function (item) {
+    item = item || ReactDOM.findDOMNode(this.refs.field).value;
+    this.props.onChange(item);
+  },
+
+  render: function () {
+    return (
+      <span style={{ position: 'relative' }}>
+        <i className="icon icon-search" style={{ position: 'absolute', right: '10px', top: '-4px', color: '#bbbbbb' }} />
+        <input type="text" ref="field" autoComplete="off" value={this.props.value} placeholder={this.props.placeholder}
+          onChange={this.onChange} style={{ paddingRight: '30px' }} autoFocus={this.props.autoFocus} />
+      </span>
+    );
+  }
+});
+
 
 var MenuDropDown = React.createClass({
 
@@ -1605,6 +1672,7 @@ export default {
   PaddedBorderedBox: PaddedBorderedBox,
   Document: Document,
   LoadLines: LoadLines,
+  TypeaheadField: TypeaheadField,
   MenuDropDown: MenuDropDown,
   TrayContents: TrayContents,
   TrayWrapper: TrayWrapper,
