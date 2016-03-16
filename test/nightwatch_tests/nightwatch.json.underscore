@@ -16,7 +16,7 @@
     "cli_args" : {
       "webdriver.chrome.driver" : "",
       "webdriver.ie.driver" : "",
-      "webdriver.firefox.profile" : ""
+      "webdriver.firefox.profile" : "default"
     }
   },
 
