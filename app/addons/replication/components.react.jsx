@@ -9,29 +9,31 @@
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations under
 // the License.
-import app from "../../app";
-import FauxtonAPI from "../../core/api";
+import app from '../../app';
+import FauxtonAPI from '../../core/api';
 import React from 'react';
-import Stores from "./stores";
-import Actions from "./actions";
-import Constants from "./constants";
-import Components from "../components/react-components.react";
-import Base64 from '../style/assets/js/webtoolkit.base64';
+import Stores from './stores';
+import Actions from './actions';
+import Constants from './constants';
+import Components from '../components/react-components.react';
+import base64 from 'base-64';
 
-var store = Stores.replicationStore;
-var LoadLines = GeneralComponents.LoadLines;
-var TypeaheadField = GeneralComponents.TypeaheadField;
-var StyledSelect = GeneralComponents.StyledSelect;
-var ConfirmButton = GeneralComponents.ConfirmButton;
+const store = Stores.replicationStore;
+const LoadLines = Components.LoadLines;
+const TypeaheadField = Components.TypeaheadField;
+const StyledSelect = Components.StyledSelect;
+const ConfirmButton = Components.ConfirmButton;
 
 
-var ReplicationController = React.createClass({
+class ReplicationController extends React.Component {
+  constructor (props) {
+    super(props);
+    this.state = this.getStoreState();
+    this.submit = this.submit.bind(this);
+    this.clear = this.clear.bind(this);
+  }
 
-  getInitialState: function () {
-    return this.getStoreState();
-  },
-
-  getStoreState: function () {
+  getStoreState () {
     return {
       loading: store.isLoading(),
       databases: store.getDatabases(),
@@ -52,105 +54,102 @@ var ReplicationController = React.createClass({
       replicationType: store.getReplicationType(),
       replicationDocName: store.getReplicationDocName()
     };
-  },
+  }
 
-  componentDidMount: function () {
+  componentDidMount () {
     store.on('change', this.onChange, this);
-  },
+  }
 
-  componentWillUnmount: function () {
+  componentWillUnmount () {
     store.off('change', this.onChange);
-  },
+  }
 
-  onChange: function () {
-    if (this.isMounted()) {
-      this.setState(this.getStoreState());
-    }
-  },
+  onChange () {
+    this.setState(this.getStoreState());
+  }
 
   // the four local replication targets all show slightly different fields
-  getReplicationTargetRow: function () {
-    if (!this.state.replicationTarget) {
+  getReplicationTargetRow () {
+    const { replicationTarget, remoteTarget, databases, targetDatabase } = this.state;
+    if (!replicationTarget) {
       return null;
     }
-
     return (
       <ReplicationTargetRow
-        remoteTarget={this.state.remoteTarget}
-        replicationTarget={this.state.replicationTarget}
-        databases={this.state.databases}
-        targetDatabase={this.state.targetDatabase} />
+        remoteTarget={remoteTarget}
+        replicationTarget={replicationTarget}
+        databases={databases}
+        targetDatabase={targetDatabase}/>
     );
-  },
+  }
 
-  clear: function (e) {
+  clear (e) {
     e.preventDefault();
     Actions.clearReplicationForm();
-  },
+  }
 
-
-  // TODO move this elsewhere.
-  getAuthHeaders (user, password) {
+  // TODO once I figure out which scenarios require a bloody password
+  getAuthHeaders (password = 'testerpass') {
+    const username = app.session.get('userCtx').name;
     return {
-      'Authorization': 'Basic ' + Base64.encode(user + ':' + password)
+      'Authorization': 'Basic ' + base64.encode(username + ':' + password)
     };
-  },
+  }
 
-  submit: function () {
+  submit () {
+    const { replicationSource, sourceDatabase, remoteSource, replicationTarget, targetDatabase, replicationType, replicationDocName} = this.state;
 
-    // what we're going to construct
-    var params = {
-      source: {
-        headers: { }
-        url: ''
-      },
-      target: {}
-    };
-
-    if (this.state.replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
-      params.source.url = window.location.origin + '/' + this.state.sourceDatabase;
+    var params = {};
+    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+      params.source = {
+        headers: this.getAuthHeaders(),
+        url: window.location.origin + '/' + sourceDatabase
+      };
     } else {
-      params.source = this.state.remoteSource;
+      params.source = remoteSource;
     }
 
-    if (this.state.replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
-      params.target = this.state.targetDatabase;
+    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
+      params.target = {
+        headers: this.getAuthHeaders(),
+        url: window.location.origin + '/' + targetDatabase
+      };
     }
 
-    if (this.state.replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
-      params.target = this.state.targetDatabase;
+    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
+      params.target = targetDatabase;
     }
 
-    if (this.state.replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE ||
-        this.state.replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE) {
+    if (_.contains([Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE], replicationTarget)) {
       params.create_target = true;
     }
-    if (this.state.replicationType === Constants.REPLICATION_TYPE.CONTINUOUS) {
+    if (replicationType === Constants.REPLICATION_TYPE.CONTINUOUS) {
       params.continuous = true;
     }
 
-    if (this.state.replicationDocName) {
+    if (replicationDocName) {
       params._id = this.state.replicationDocName;
     }
 
-    // POSTing to the _replicator DB requires authentication. See:
-    // https://gist.github.com/fdmanana/832610#8-the-user_ctx-property-and-delegations
+    // POSTing to the _replicator DB requires authentication
     var user = FauxtonAPI.session.user();
     var userName = _.isNull(user) ? '' : FauxtonAPI.session.user().name;
     params.user_ctx = {
       name: userName,
-      roles: ['_admin']
+      roles: ['_admin', '_reader', '_writer']
     };
 
     Actions.replicate(params);
-  },
+  }
 
-  getReplicationSourceRow: function () {
-    if (!this.state.replicationSource) {
+  getReplicationSourceRow () {
+    const { replicationSource, databases, sourceDatabase, remoteSource } = this.state;
+
+    if (!replicationSource) {
       return null;
     }
 
-    if (this.state.replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
       return (
         <div className="row">
           <div className="span3">
@@ -158,10 +157,10 @@ var ReplicationController = React.createClass({
           </div>
           <div className="span7">
             <TypeaheadField
-              list={this.state.databases}
+              list={databases}
               placeholder="Database name"
               onChange={(val) => Actions.updateFormField('sourceDatabase', val)}
-              value={this.state.sourceDatabase} />
+              value={sourceDatabase}/>
           </div>
         </div>
       );
@@ -172,24 +171,26 @@ var ReplicationController = React.createClass({
         <div className="row">
           <div className="span3">Database URL:</div>
           <div className="span7">
-            <input type="text" className="connection-url" placeholder="https://" value={this.state.remoteSource}
-              onChange={(e) => Actions.updateFormField('remoteSource', e.target.value)} />
+            <input type="text" className="connection-url" placeholder="https://" value={remoteSource}
+              onChange={(e) => Actions.updateFormField('remoteSource', e.target.value)}/>
             <div className="connection-url-example">e.g. https://$USERNAME:$PASSWORD@server.com/$DATABASE</div>
           </div>
         </div>
       </div>
     );
-  },
+  }
 
-  render: function () {
-    if (this.state.loading) {
+  render () {
+    const { loading, replicationSource, replicationTarget, replicationType, replicationDocName } = this.state;
+
+    if (loading) {
       return (
         <LoadLines />
       );
     }
 
     var confirmButtonEnabled = true;
-    if (!this.state.replicationSource || !this.state.replicationTarget) {
+    if (!replicationSource || !replicationTarget) {
       confirmButtonEnabled = false;
     }
 
@@ -201,13 +202,13 @@ var ReplicationController = React.createClass({
           </div>
           <div className="span7">
             <ReplicationSource
-              value={this.state.replicationSource}
-              onChange={(repSource) => Actions.updateFormField('replicationSource', repSource)} />
+              value={replicationSource}
+              onChange={(repSource) => Actions.updateFormField('replicationSource', repSource)}/>
           </div>
         </div>
         {this.getReplicationSourceRow()}
 
-        <hr size="1" />
+        <hr size="1"/>
 
         <div className="row">
           <div className="span3">
@@ -215,13 +216,13 @@ var ReplicationController = React.createClass({
           </div>
           <div className="span7">
             <ReplicationTarget
-              value={this.state.replicationTarget}
-              onChange={(repTarget) => Actions.updateFormField('replicationTarget', repTarget)} />
+              value={replicationTarget}
+              onChange={(repTarget) => Actions.updateFormField('replicationTarget', repTarget)}/>
           </div>
         </div>
         {this.getReplicationTargetRow()}
 
-        <hr size="1" />
+        <hr size="1"/>
 
         <div className="row">
           <div className="span3">
@@ -229,8 +230,8 @@ var ReplicationController = React.createClass({
           </div>
           <div className="span7">
             <ReplicationType
-              value={this.state.replicationType}
-              onChange={(repType) => Actions.updateFormField('replicationType', repType)} />
+              value={replicationType}
+              onChange={(repType) => Actions.updateFormField('replicationType', repType)}/>
           </div>
         </div>
 
@@ -239,8 +240,8 @@ var ReplicationController = React.createClass({
             Replication Document:
           </div>
           <div className="span7">
-            <input type="text" placeholder="Custom ID (optional)" value={this.state.replicationDocName}
-              onChange={(e) => Actions.updateFormField('replicationDocName', e.target.value)} />
+            <input type="text" placeholder="Custom ID (optional)" value={replicationDocName}
+              onChange={(e) => Actions.updateFormField('replicationDocName', e.target.value)}/>
           </div>
         </div>
 
@@ -248,24 +249,18 @@ var ReplicationController = React.createClass({
           <div className="span3">
           </div>
           <div className="span7">
-            <ConfirmButton id="replicate" text="Replicate" onClick={this.submit} disabled={!confirmButtonEnabled} />
+            <ConfirmButton id="replicate" text="Replicate" onClick={this.submit} disabled={!confirmButtonEnabled}/>
             <a href="#" data-bypass="true" onClick={this.clear}>Clear</a>
           </div>
         </div>
-
       </div>
     );
   }
-});
+}
 
 
-var ReplicationSource = React.createClass({
-  propTypes: {
-    value: React.PropTypes.string.isRequired,
-    onChange: React.PropTypes.func.isRequired
-  },
-
-  getOptions: function () {
+class ReplicationSource extends React.Component {
+  getOptions () {
     var options = [
       { value: '', label: 'Select source' },
       { value: Constants.REPLICATION_SOURCE.LOCAL, label: 'Local database' },
@@ -276,9 +271,9 @@ var ReplicationSource = React.createClass({
         <option value={option.value} key={option.value}>{option.label}</option>
       );
     });
-  },
+  }
 
-  render: function () {
+  render () {
     return (
       <StyledSelect
         selectContent={this.getOptions()}
@@ -287,16 +282,15 @@ var ReplicationSource = React.createClass({
         selectValue={this.props.value} />
     );
   }
-});
+}
+ReplicationSource.propTypes = {
+  value: React.PropTypes.string.isRequired,
+  onChange: React.PropTypes.func.isRequired
+};
 
 
-var ReplicationTarget = React.createClass({
-  propTypes: {
-    value: React.PropTypes.string.isRequired,
-    onChange: React.PropTypes.func.isRequired
-  },
-
-  getOptions: function () {
+class ReplicationTarget extends React.Component {
+  getOptions () {
     var options = [
       { value: '', label: 'Select target' },
       { value: Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE, label: 'Existing local database' },
@@ -309,9 +303,9 @@ var ReplicationTarget = React.createClass({
         <option value={option.value} key={option.value}>{option.label}</option>
       );
     });
-  },
+  }
 
-  render: function () {
+  render () {
     return (
       <StyledSelect
         selectContent={this.getOptions()}
@@ -320,16 +314,16 @@ var ReplicationTarget = React.createClass({
         selectValue={this.props.value} />
     );
   }
-});
+}
+
+ReplicationTarget.propTypes = {
+  value: React.PropTypes.string.isRequired,
+  onChange: React.PropTypes.func.isRequired
+};
 
 
-var ReplicationType = React.createClass({
-  propTypes: {
-    value: React.PropTypes.string.isRequired,
-    onChange: React.PropTypes.func.isRequired
-  },
-
-  getOptions: function () {
+class ReplicationType extends React.Component {
+  getOptions () {
     var options = [
       { value: Constants.REPLICATION_TYPE.ONE_TIME, label: 'One time' },
       { value: Constants.REPLICATION_TYPE.CONTINUOUS, label: 'Continuous' }
@@ -339,9 +333,9 @@ var ReplicationType = React.createClass({
         <option value={option.value} key={option.value}>{option.label}</option>
       );
     });
-  },
+  }
 
-  render: function () {
+  render () {
     return (
       <StyledSelect
         selectContent={this.getOptions()}
@@ -350,40 +344,40 @@ var ReplicationType = React.createClass({
         selectValue={this.props.value} />
     );
   }
-});
+}
+ReplicationType.propTypes = {
+  value: React.PropTypes.string.isRequired,
+  onChange: React.PropTypes.func.isRequired
+};
 
-var ReplicationTargetRow = React.createClass({
-  propTypes: {
-    remoteTarget: React.PropTypes.string.isRequired,
-    replicationTarget: React.PropTypes.string.isRequired,
-    databases: React.PropTypes.array.isRequired,
-    targetDatabase: React.PropTypes.string.isRequired
-  },
 
-  update: function (value) {
+class ReplicationTargetRow extends React.Component {
+  update (value) {
     Actions.updateFormField('remoteTarget', value);
-  },
+  }
 
-  render: function () {
+  render () {
+    const { replicationTarget, remoteTarget, targetDatabase, databases } = this.props;
+
     var targetLabel = 'Target Name:';
     var field = null;
 
     // new and existing remote DBs show a URL field
-    if (this.props.replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||
-        this.props.replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
+    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||
+        replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
       targetLabel = 'Database URL';
       field = (
         <div>
-          <input type="text" className="connection-url" placeholder="https://" value={this.props.remoteTarget}
+          <input type="text" className="connection-url" placeholder="https://" value={remoteTarget}
             onChange={(e) => Actions.updateFormField('remoteTarget', e.target.value)} />
           <div className="connection-url-example">e.g. https://$USERNAME:$PASSWORD@server.com/$DATABASE</div>
         </div>
       );
 
     // new local databases have a freeform text field
-    } else if (this.props.replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
       field = (
-        <input type="text" placeholder="Database name" value={this.props.targetDatabase}
+        <input type="text" placeholder="Database name" value={targetDatabase}
           onChange={(e) => Actions.updateFormField('targetDatabase', e.target.value)} />
       );
 
@@ -391,15 +385,15 @@ var ReplicationTargetRow = React.createClass({
     } else {
       field = (
         <TypeaheadField
-          list={this.props.databases}
+          list={databases}
           placeholder="Database name"
           onChange={(val) => Actions.updateFormField('targetDatabase', val)}
-          value={this.props.targetDatabase} />
+          value={targetDatabase} />
       );
     }
 
-    if (this.props.replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||
-        this.props.replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
+    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||
+        replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
       targetLabel = 'New Database:';
     }
 
@@ -412,10 +406,15 @@ var ReplicationTargetRow = React.createClass({
       </div>
     );
   }
-});
+}
+ReplicationTargetRow.propTypes = {
+  remoteTarget: React.PropTypes.string.isRequired,
+  replicationTarget: React.PropTypes.string.isRequired,
+  databases: React.PropTypes.array.isRequired,
+  targetDatabase: React.PropTypes.string.isRequired
+};
 
 
 export default {
   ReplicationController: ReplicationController
 };
-

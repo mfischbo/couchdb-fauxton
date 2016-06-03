@@ -9,87 +9,81 @@
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations under
 // the License.
-
-define([
-  '../../app',
-  '../../core/api',
-  './actiontypes'
-],
-
-function (app, FauxtonAPI, ActionTypes) {
+import app from '../../app';
+import FauxtonAPI from '../../core/api';
+import ActionTypes from './actiontypes';
 
 
-  function initReplicator (sourceDatabase) {
+function initReplicator (sourceDatabase) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.INIT_REPLICATION,
+    options: {
+      sourceDatabase: sourceDatabase
+    }
+  });
+
+  // load the databases
+  $.ajax({
+    url: app.host + '/_all_dbs',
+    contentType: 'application/json',
+    dataType: 'json'
+  }).then(function (databases) {
     FauxtonAPI.dispatch({
-      type: ActionTypes.INIT_REPLICATION,
+      type: ActionTypes.REPLICATION_DATABASES_LOADED,
       options: {
-        sourceDatabase: sourceDatabase
+        databases: databases
       }
     });
+  });
+}
 
-    // load the databases
-    $.ajax({
-      url: app.host + '/_all_dbs',
-      contentType: 'application/json',
-      dataType: 'json'
-    }).then(function (databases) {
-      FauxtonAPI.dispatch({
-        type: ActionTypes.REPLICATION_DATABASES_LOADED,
-        options: {
-          databases: databases
-        }
-      });
+function replicate (params) {
+  var promise = $.ajax({
+    url: window.location.origin + '/_replicator',
+    contentType: 'application/json',
+    type: 'POST',
+    dataType: 'json',
+    data: JSON.stringify(params)
+  });
+
+  var source = (_.isString(params.source)) ? params.source : params.source.url;
+  var target = (_.isString(params.target)) ? params.target : params.source.url;
+
+  promise.then(function () {
+    FauxtonAPI.addNotification({
+      msg: 'Replication from <code>' + source + '</code> to <code>' + params.target + '</code> has begun.',
+      type: 'success',
+      escape: false,
+      clear: true
     });
-  }
-
-  function replicate (params) {
-
-
-    var promise = $.ajax({
-      url: window.location.origin + '/_replicator',
-      contentType: 'application/json',
-      type: 'POST',
-      dataType: 'json',
-      data: JSON.stringify(params)
+  }, function (xhr) {
+    var errorMessage = JSON.parse(xhr.responseText);
+    FauxtonAPI.addNotification({
+      msg: errorMessage.reason,
+      type: 'error',
+      clear: true
     });
+  });
+}
 
-    promise.then(function () {
-      FauxtonAPI.addNotification({
-        msg: 'Replication from <code>' + params.source + '</code> to <code>' + params.target + '</code> has begun.',
-        type: 'success',
-        escape: false,
-        clear: true
-      });
-    }, function (xhr) {
-      var errorMessage = JSON.parse(xhr.responseText);
-      FauxtonAPI.addNotification({
-        msg: errorMessage.reason,
-        type: 'error',
-        clear: true
-      });
-    });
-  }
+function updateFormField (fieldName, value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_UPDATE_FORM_FIELD,
+    options: {
+      fieldName: fieldName,
+      value: value
+    }
+  });
+}
 
-  function updateFormField (fieldName, value) {
-    FauxtonAPI.dispatch({
-      type: ActionTypes.REPLICATION_UPDATE_FORM_FIELD,
-      options: {
-        fieldName: fieldName,
-        value: value
-      }
-    });
-  }
+function clearReplicationForm () {
+  FauxtonAPI.dispatch({ type: ActionTypes.REPLICATION_CLEAR_FORM });
+}
 
 
-  function clearReplicationForm () {
-    FauxtonAPI.dispatch({ type: ActionTypes.REPLICATION_CLEAR_FORM });
-  }
-
-  return {
-    initReplicator: initReplicator,
-    replicate: replicate,
-    updateFormField: updateFormField,
-    clearReplicationForm: clearReplicationForm
-  };
-
-});
+export default {
+  initReplicator,
+  replicate,
+  updateFormField,
+  clearReplicationForm
+};

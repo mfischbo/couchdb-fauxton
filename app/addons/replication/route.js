@@ -30,7 +30,8 @@ var RepRouteObject = FauxtonAPI.RouteObject.extend({
   crumbs: [
     { "name": 'Replication', 'link': 'replication' }
   ],
-  defaultView: function (dbname) {
+  roles: ['fx_loggedIn'],
+  defaultView: function (databaseName) {
     var isAdmin = FauxtonAPI.session.isAdmin();
 
 
