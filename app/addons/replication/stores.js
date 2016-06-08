@@ -107,8 +107,6 @@ const ReplicationStore = FauxtonAPI.Store.extend({
       sourceDatabase: '_sourceDatabase'
     };
 
-    // TODO confirm exists
-
     this[validFieldMap[fieldName]] = value;
   },
 
@@ -159,6 +157,7 @@ const ReplicationStore = FauxtonAPI.Store.extend({
 
       case AccountActionTypes.AUTH_CREDS_VALID:
         this._authenticated = true;
+        this._password = action.options.password;
       break;
 
       case AccountActionTypes.AUTH_CREDS_INVALID:

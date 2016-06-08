@@ -90,7 +90,7 @@ function createAdmin (username, password, loginAfter) {
 }
 
 // simple authentication method - does nothing other than check creds
-function authenticate (username, password) {
+function authenticate (username, password, onSuccess) {
   $.ajax({
     cache: false,
     type: 'POST',
@@ -103,6 +103,7 @@ function authenticate (username, password) {
       options: { username: username, password: password }
     });
     hidePasswordModal();
+    onSuccess(username, password);
   }, () => {
     FauxtonAPI.addNotification({
       msg: 'Your password is incorrect.',

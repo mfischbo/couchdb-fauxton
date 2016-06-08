@@ -311,12 +311,20 @@ class PasswordModal extends React.Component {
       password: ''
     };
     this.authenticate = this.authenticate.bind(this);
+    this.onKeyPress = this.onKeyPress.bind(this);
+  }
+
+  // clicking <Enter> should submit the form
+  onKeyPress (e) {
+    if (e.key === 'Enter') {
+      this.authenticate();
+    }
   }
 
   // default authentication function. This can be overridden via props if you want to do something different
   authenticate () {
     const username = app.session.get('userCtx').name; // yuck. But simplest for now until logging in publishes the user data
-    this.props.onSubmit(username, this.state.password);
+    this.props.onSubmit(username, this.state.password, this.props.onSuccess);
   }
 
   render () {
@@ -328,7 +336,7 @@ class PasswordModal extends React.Component {
         <Modal.Body>
           {this.props.modalMessage}
           <input type="password" placeholder="Enter your password" autoFocus={true} value={this.state.password}
-            onChange={(e) => this.setState({ password: e.target.value})} />
+            onChange={(e) => this.setState({ password: e.target.value })} onKeyPress={this.onKeyPress} />
         </Modal.Body>
         <Modal.Footer>
           <a className="cancel-link" onClick={() => this.props.onClose()}>Cancel</a>
@@ -352,6 +360,7 @@ PasswordModal.defaultProps = {
   modalMessage: '',
   onClose: AuthActions.hidePasswordModal,
   onSubmit: AuthActions.authenticate,
+  onSuccess: () => {},
   submitBtnLabel: 'Continue'
 };
 

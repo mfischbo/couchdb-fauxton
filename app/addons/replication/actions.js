@@ -16,12 +16,14 @@ import Helpers from './helpers';
 
 
 function initReplicator (sourceDatabase) {
-  FauxtonAPI.dispatch({
-    type: ActionTypes.INIT_REPLICATION,
-    options: {
-      sourceDatabase: sourceDatabase
-    }
-  });
+  if (sourceDatabase) {
+    FauxtonAPI.dispatch({
+      type: ActionTypes.INIT_REPLICATION,
+      options: {
+        sourceDatabase: sourceDatabase
+      }
+    });
+  }
 
   // load the databases
   $.ajax({

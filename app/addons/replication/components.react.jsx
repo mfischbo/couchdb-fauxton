@@ -103,8 +103,12 @@ class ReplicationController extends React.Component {
     AuthActions.showPasswordModal();
   }
 
+  getUsername () {
+    return app.session.get('userCtx').name;
+  }
+
   getAuthHeaders () {
-    const username = app.session.get('userCtx').name;
+    const username = this.getUsername();
     return {
       'Authorization': 'Basic ' + base64.encode(username + ':' + this.state.password)
     };
@@ -271,7 +275,8 @@ class ReplicationController extends React.Component {
         <PasswordModal
           visible={passwordModalVisible}
           modalMessage={<p>Replication requires authentication.</p>}
-          submitBtnLabel="Continue Replication" />
+          submitBtnLabel="Continue Replication"
+          onSuccess={this.submit} />
       </div>
     );
   }

@@ -34,7 +34,6 @@ var RepRouteObject = FauxtonAPI.RouteObject.extend({
   defaultView: function (databaseName) {
     var isAdmin = FauxtonAPI.session.isAdmin();
 
-
     //this.tasks = [];
     //this.replication = new Replication.Replicate({});
     //if (isAdmin) {
