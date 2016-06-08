@@ -12,6 +12,7 @@
 import app from '../../app';
 import FauxtonAPI from '../../core/api';
 import ActionTypes from './actiontypes';
+import Helpers from './helpers';
 
 
 function initReplicator (sourceDatabase) {
@@ -46,12 +47,12 @@ function replicate (params) {
     data: JSON.stringify(params)
   });
 
-  var source = (_.isString(params.source)) ? params.source : params.source.url;
-  var target = (_.isString(params.target)) ? params.target : params.source.url;
+  var source = Helpers.getDatabaseLabel(params.source);
+  var target = Helpers.getDatabaseLabel(params.target);
 
   promise.then(function () {
     FauxtonAPI.addNotification({
-      msg: 'Replication from <code>' + source + '</code> to <code>' + params.target + '</code> has begun.',
+      msg: 'Replication from <code>' + source + '</code> to <code>' + target + '</code> has begun.',
       type: 'success',
       escape: false,
       clear: true

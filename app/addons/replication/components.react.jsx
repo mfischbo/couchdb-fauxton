@@ -17,12 +17,15 @@ import Actions from './actions';
 import Constants from './constants';
 import Components from '../components/react-components.react';
 import base64 from 'base-64';
+import AuthActions from '../auth/actions';
+import AuthComponents from '../auth/components.react';
 
 const store = Stores.replicationStore;
 const LoadLines = Components.LoadLines;
 const TypeaheadField = Components.TypeaheadField;
 const StyledSelect = Components.StyledSelect;
 const ConfirmButton = Components.ConfirmButton;
+const PasswordModal = AuthComponents.PasswordModal;
 
 
 class ReplicationController extends React.Component {
@@ -31,12 +34,15 @@ class ReplicationController extends React.Component {
     this.state = this.getStoreState();
     this.submit = this.submit.bind(this);
     this.clear = this.clear.bind(this);
+    this.showPasswordModal = this.showPasswordModal.bind(this);
   }
 
   getStoreState () {
     return {
       loading: store.isLoading(),
       databases: store.getDatabases(),
+      authenticated: store.isAuthenticated(),
+      password: store.getPassword(),
 
       // source fields
       replicationSource: store.getReplicationSource(),
@@ -51,6 +57,7 @@ class ReplicationController extends React.Component {
       remoteTarget: store.getRemoteTarget(),
 
       // other
+      passwordModalVisible: store.isPasswordModalVisible(),
       replicationType: store.getReplicationType(),
       replicationDocName: store.getReplicationDocName()
     };
@@ -88,11 +95,18 @@ class ReplicationController extends React.Component {
     Actions.clearReplicationForm();
   }
 
-  // TODO once I figure out which scenarios require a bloody password
-  getAuthHeaders (password = 'testerpass') {
+  showPasswordModal (e) {
+    if (this.state.authenticated) {
+      this.submit();
+      return;
+    }
+    AuthActions.showPasswordModal();
+  }
+
+  getAuthHeaders () {
     const username = app.session.get('userCtx').name;
     return {
-      'Authorization': 'Basic ' + base64.encode(username + ':' + password)
+      'Authorization': 'Basic ' + base64.encode(username + ':' + this.state.password)
     };
   }
 
@@ -181,7 +195,7 @@ class ReplicationController extends React.Component {
   }
 
   render () {
-    const { loading, replicationSource, replicationTarget, replicationType, replicationDocName } = this.state;
+    const { loading, replicationSource, replicationTarget, replicationType, replicationDocName, passwordModalVisible } = this.state;
 
     if (loading) {
       return (
@@ -249,10 +263,15 @@ class ReplicationController extends React.Component {
           <div className="span3">
           </div>
           <div className="span7">
-            <ConfirmButton id="replicate" text="Replicate" onClick={this.submit} disabled={!confirmButtonEnabled}/>
+            <ConfirmButton id="replicate" text="Replicate" onClick={this.showPasswordModal} disabled={!confirmButtonEnabled}/>
             <a href="#" data-bypass="true" onClick={this.clear}>Clear</a>
           </div>
         </div>
+
+        <PasswordModal
+          visible={passwordModalVisible}
+          modalMessage={<p>Replication requires authentication.</p>}
+          submitBtnLabel="Continue Replication" />
       </div>
     );
   }
@@ -416,5 +435,6 @@ ReplicationTargetRow.propTypes = {
 
 
 export default {
-  ReplicationController: ReplicationController
+  ReplicationController,
+  PasswordModal
 };

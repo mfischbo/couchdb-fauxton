@@ -60,11 +60,11 @@ var Replication = {};
 //  }
 //});
 
-Replication.Replicate = Backbone.Model.extend({
-  documentation: FauxtonAPI.constants.DOC_URLS.REPLICATION,
-  url: function () {
-    return window.location.origin + '/_replicate';
-  }
-});
+//Replication.Replicate = Backbone.Model.extend({
+//  documentation: FauxtonAPI.constants.DOC_URLS.REPLICATION,
+//  url: function () {
+//    return window.location.origin + '/_replicate';
+//  }
+//});
 
 export default Replication;

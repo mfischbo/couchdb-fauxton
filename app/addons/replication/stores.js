@@ -9,9 +9,11 @@
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations under
 // the License.
+import app from "../../app";
 import FauxtonAPI from '../../core/api';
 import ActionTypes from './actiontypes';
 import Constants from './constants';
+import AccountActionTypes from '../auth/actiontypes';
 
 
 const ReplicationStore = FauxtonAPI.Store.extend({
@@ -22,6 +24,8 @@ const ReplicationStore = FauxtonAPI.Store.extend({
   reset: function () {
     this._loading = false;
     this._databases = [];
+    this._authenticated = false;
+    this._password = '';
 
     // source fields
     this._replicationSource = '';
@@ -34,12 +38,17 @@ const ReplicationStore = FauxtonAPI.Store.extend({
     this._remoteTarget = '';
 
     // other
+    this._isPasswordModalVisible = false;
     this._replicationType = Constants.REPLICATION_TYPE.ONE_TIME;
     this._replicationDocName = '';
   },
 
   isLoading: function () {
     return this._loading;
+  },
+
+  isAuthenticated: function () {
+    return this._authenticated;
   },
 
   getReplicationSource: function () {
@@ -111,6 +120,14 @@ const ReplicationStore = FauxtonAPI.Store.extend({
     return this._remoteTarget;
   },
 
+  isPasswordModalVisible: function () {
+    return this._isPasswordModalVisible;
+  },
+
+  getPassword: function () {
+    return this._password;
+  },
+
   dispatch: function (action) {
     switch (action.type) {
 
@@ -130,6 +147,22 @@ const ReplicationStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.REPLICATION_CLEAR_FORM:
         this.reset();
+      break;
+
+      case AccountActionTypes.AUTH_SHOW_PASSWORD_MODAL:
+        this._isPasswordModalVisible = true;
+      break;
+
+      case AccountActionTypes.AUTH_HIDE_PASSWORD_MODAL:
+        this._isPasswordModalVisible = false;
+      break;
+
+      case AccountActionTypes.AUTH_CREDS_VALID:
+        this._authenticated = true;
+      break;
+
+      case AccountActionTypes.AUTH_CREDS_INVALID:
+        this._authenticated = false;
       break;
 
       default:
