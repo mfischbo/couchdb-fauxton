@@ -10,49 +10,35 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
-import app from "../../app";
-import FauxtonAPI from "../../core/api";
-import Replication from "./resources";
-import Actions from "./actions";
-import Components from "./components.react";
+import app from '../../app';
+import FauxtonAPI from '../../core/api';
+import Replication from './resources';
+import Actions from './actions';
+import Components from './components.react';
 
 
-var RepRouteObject = FauxtonAPI.RouteObject.extend({
+var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   layout: 'one_pane',
   routes: {
-    "replication": 'defaultView',
-    "replication/:dbname": 'defaultView'
+    'replication': 'defaultView',
+    'replication/:dbname': 'defaultView'
   },
   selectedHeader: 'Replication',
   apiUrl: function () {
-    return ['TODO url here', FauxtonAPI.constants.DOC_URLS.REPLICATION];
+    return [FauxtonAPI.urls('replication', 'api'), FauxtonAPI.constants.DOC_URLS.REPLICATION];
   },
   crumbs: [
-    { "name": 'Replication', 'link': 'replication' }
+    { name: 'Replication', link: 'replication' }
   ],
   roles: ['fx_loggedIn'],
   defaultView: function (databaseName) {
-    var isAdmin = FauxtonAPI.session.isAdmin();
-
-    //this.tasks = [];
-    //this.replication = new Replication.Replicate({});
-    //if (isAdmin) {
-    //  this.tasks = new Replication.Tasks({ id: 'ReplicationTasks' });
-    //  this.setView('#dashboard-content', new Views.ReplicationFormForAdmins({
-    //    selectedDB: dbname || '',
-    //    collection: this.databases,
-    //    status: this.tasks
-    //  }));
-    //  return;
-    //}
-
-    var sourceDatabase = databaseName || '';
+    const sourceDatabase = databaseName || '';
     Actions.initReplicator(sourceDatabase);
     this.setComponent('#dashboard-content', Components.ReplicationController);
   }
 });
 
 
-Replication.RouteObjects = [RepRouteObject];
+Replication.RouteObjects = [ReplicationRouteObject];
 
 export default Replication;

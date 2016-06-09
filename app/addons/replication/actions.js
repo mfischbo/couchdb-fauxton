@@ -24,8 +24,6 @@ function initReplicator (sourceDatabase) {
       }
     });
   }
-
-  // load the databases
   $.ajax({
     url: app.host + '/_all_dbs',
     contentType: 'application/json',

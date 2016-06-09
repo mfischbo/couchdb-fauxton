@@ -96,7 +96,16 @@ class ReplicationController extends React.Component {
   }
 
   showPasswordModal (e) {
-    if (this.state.authenticated) {
+    const { replicationSource, sourceDatabase, remoteSource, remoteTarget, replicationTarget, targetDatabase, replicationType,
+      replicationDocName} = this.state;
+
+    var hasLocalSourceOrTarget = (replicationSource === Constants.REPLICATION_SOURCE.LOCAL ||
+      replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE ||
+      replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE);
+
+    // if the user is authenticated, or if NEITHER the source nor target are local, just submit. The password
+    // modal isn't necessary
+    if (!hasLocalSourceOrTarget || this.state.authenticated) {
       this.submit();
       return;
     }
@@ -115,9 +124,12 @@ class ReplicationController extends React.Component {
   }
 
   submit () {
-    const { replicationSource, sourceDatabase, remoteSource, replicationTarget, targetDatabase, replicationType, replicationDocName} = this.state;
+    const { replicationSource, sourceDatabase, remoteSource, remoteTarget, replicationTarget, targetDatabase, replicationType,
+      replicationDocName} = this.state;
 
-    var params = {};
+    const params = {};
+
+    // source
     if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
       params.source = {
         headers: this.getAuthHeaders(),
@@ -127,15 +139,29 @@ class ReplicationController extends React.Component {
       params.source = remoteSource;
     }
 
-    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
+    // target
+    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE) {
       params.target = {
         headers: this.getAuthHeaders(),
         url: window.location.origin + '/' + targetDatabase
       };
-    }
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
+      params.target = remoteTarget;
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
 
-    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
-      params.target = targetDatabase;
+      // check to see if we really need to send headers here or can just do the ELSE clause in all scenarioe
+      if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+        params.target = {
+          headers: this.getAuthHeaders(),
+          url: window.location.origin + '/' + targetDatabase
+        };
+      } else {
+        const port = window.location.port === '' ? '' : ':' + window.location.port;
+        params.target = window.location.protocol + '//' + this.getUsername() + ':' + this.state.password + '@'
+          + window.location.hostname + port + '/' + targetDatabase;
+      }
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE) {
+      params.target = remoteTarget;
     }
 
     if (_.contains([Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE], replicationTarget)) {
@@ -150,8 +176,8 @@ class ReplicationController extends React.Component {
     }
 
     // POSTing to the _replicator DB requires authentication
-    var user = FauxtonAPI.session.user();
-    var userName = _.isNull(user) ? '' : FauxtonAPI.session.user().name;
+    const user = FauxtonAPI.session.user();
+    const userName = _.isNull(user) ? '' : FauxtonAPI.session.user().name;
     params.user_ctx = {
       name: userName,
       roles: ['_admin', '_reader', '_writer']
@@ -207,7 +233,7 @@ class ReplicationController extends React.Component {
       );
     }
 
-    var confirmButtonEnabled = true;
+    let confirmButtonEnabled = true;
     if (!replicationSource || !replicationTarget) {
       confirmButtonEnabled = false;
     }
@@ -285,7 +311,7 @@ class ReplicationController extends React.Component {
 
 class ReplicationSource extends React.Component {
   getOptions () {
-    var options = [
+    const options = [
       { value: '', label: 'Select source' },
       { value: Constants.REPLICATION_SOURCE.LOCAL, label: 'Local database' },
       { value: Constants.REPLICATION_SOURCE.REMOTE, label: 'Remote database' }
@@ -315,7 +341,7 @@ ReplicationSource.propTypes = {
 
 class ReplicationTarget extends React.Component {
   getOptions () {
-    var options = [
+    const options = [
       { value: '', label: 'Select target' },
       { value: Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE, label: 'Existing local database' },
       { value: Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE, label: 'Existing remote database' },
@@ -348,7 +374,7 @@ ReplicationTarget.propTypes = {
 
 class ReplicationType extends React.Component {
   getOptions () {
-    var options = [
+    const options = [
       { value: Constants.REPLICATION_TYPE.ONE_TIME, label: 'One time' },
       { value: Constants.REPLICATION_TYPE.CONTINUOUS, label: 'Continuous' }
     ];
@@ -383,8 +409,8 @@ class ReplicationTargetRow extends React.Component {
   render () {
     const { replicationTarget, remoteTarget, targetDatabase, databases } = this.props;
 
-    var targetLabel = 'Target Name:';
-    var field = null;
+    let targetLabel = 'Target Name:';
+    let field = null;
 
     // new and existing remote DBs show a URL field
     if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||

@@ -20,8 +20,11 @@ replication.initialize = function () {
 };
 
 FauxtonAPI.registerUrls('replication', {
-  app: function (db) {
+  app: (db) => {
     return '#/replication/' + db;
+  },
+  api: () => {
+    return window.location.origin + '/_replicator';
   }
 });
 

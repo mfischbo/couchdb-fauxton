@@ -28,11 +28,6 @@ define([], function () {
     REPLICATION_TYPE: {
       ONE_TIME: 'REPLICATION_TYPE_ONE_TIME',
       CONTINUOUS: 'REPLICATION_TYPE_CONTINUOUS'
-    },
-
-    //
-    FIELDS: {
-
     }
   };
 
