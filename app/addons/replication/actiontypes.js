@@ -12,6 +12,11 @@
 
 define([], function () {
   return {
+
+    // Action types for tab control
+    REPLICATION_SWITCH_TABS: 'REPLICATION_SWITCH_TAB',
+
+    // Action types used by simple replication
     INIT_REPLICATION: 'INIT_REPLICATION',
     CHANGE_REPLICATION_SOURCE: 'CHANGE_REPLICATION_SOURCE',
     REPLICATION_DATABASES_LOADED: 'REPLICATION_DATABASES_LOADED',

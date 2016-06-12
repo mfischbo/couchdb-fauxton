@@ -14,6 +14,14 @@ import FauxtonAPI from '../../core/api';
 import ActionTypes from './actiontypes';
 import Helpers from './helpers';
 
+function switchTab (page) {
+  FauxtonAPI.dispatch({
+    type : ActionTypes.REPLICATION_SWITCH_TAB,
+    options : {
+      page : page
+    }
+  });
+}
 
 function initReplicator (sourceDatabase) {
   if (sourceDatabase) {
@@ -83,6 +91,7 @@ function clearReplicationForm () {
 
 
 export default {
+  switchTab,
   initReplicator,
   replicate,
   updateFormField,

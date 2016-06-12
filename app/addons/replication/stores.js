@@ -19,6 +19,8 @@ import AccountActionTypes from '../auth/actiontypes';
 const ReplicationStore = FauxtonAPI.Store.extend({
   initialize: function () {
     this.reset();
+
+    this._activePage = '';
   },
 
   reset: function () {
@@ -91,6 +93,10 @@ const ReplicationStore = FauxtonAPI.Store.extend({
     return this._replicationDocName;
   },
 
+  getActivePage: function () {
+    return this._activePage;
+  },
+
   // to cut down on boilerplate
   updateFormField: function (fieldName, value) {
 
@@ -128,6 +134,10 @@ const ReplicationStore = FauxtonAPI.Store.extend({
 
   dispatch: function (action) {
     switch (action.type) {
+
+      case ActionTypes.REPLICATION_SWITCH_TAB:
+        this._activePage = action.options.page;
+      break;
 
       case ActionTypes.INIT_REPLICATION:
         this._loading = true;

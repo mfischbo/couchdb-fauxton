@@ -26,6 +26,154 @@ const TypeaheadField = Components.TypeaheadField;
 const StyledSelect = Components.StyledSelect;
 const ConfirmButton = Components.ConfirmButton;
 const PasswordModal = AuthComponents.PasswordModal;
+const TabElementWrapper = Components.TabElementWrapper;
+const TabElement = Components.TabElement;
+
+/**
+ * The root component for the replication page.
+ * The component consists of multiple tabs and tab pages and can
+ * easily be extended by simply adding more tab pages
+ */
+class ReplicationPageController extends React.Component {
+
+  constructor (props) {
+    super(props);
+  }
+
+  render () {
+    return (
+    <div className="scrollable">
+      <ReplicatorTabs />
+      <TabPage id="simple-replication">
+        <ReplicationController />
+      </TabPage>
+      <TabPage id="advanced-replication">
+        <AdvancedReplicationController />
+      </TabPage>
+    </div>
+    );
+  }
+}
+
+/**
+ * Component to handle all clicks on tabs and the navigation
+ * between pages.
+ */
+class ReplicatorTabs extends React.Component {
+
+  constructor () {
+    super();
+    this.state = {
+      activePage : undefined
+    };
+    this.handleTabClick = this.handleTabClick.bind(this);
+  }
+
+  componentDidMount () {
+    store.on('change', this.onStoreChange, this);
+
+    // on default we select the first page
+    Actions.switchTab(this.props.pages[0]);
+  }
+
+  componentWillUnmount () {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange () {
+    this.setState({activePage : store.getActivePage() });
+  }
+
+  handleTabClick (e) {
+    var radioName = e.target.value;
+
+    this.props.pages.map((page) => {
+      if (page.label == radioName) {
+        Actions.switchTab(page);
+      }
+    });
+  }
+
+  createTabs () {
+    return (
+      this.props.pages.map((page, i) => {
+
+        const isActive = (page == store.getActivePage());
+        return (
+          <TabElement
+            key={i}
+            selected={isActive}
+            text={page.label}
+            onChange={this.handleTabClick} />
+        );
+      })
+    );
+  }
+
+  render () {
+    const tabs = this.createTabs();
+    return (
+      <TabElementWrapper>
+        {tabs}
+      </TabElementWrapper>
+    );
+  }
+};
+ReplicatorTabs.defaultProps = {
+  pages : [
+    { id : 'simple-replication', label : 'Simple Replication'},
+    { id : 'advanced-replication', label : 'Advanced Replication'}
+  ]
+};
+
+/**
+ * Component to handle the view state of a tab page.
+ */
+class TabPage extends React.Component {
+
+  constructor () {
+    super();
+    this.state = {
+      visible : false
+    };
+  }
+
+  componentDidMount () {
+    store.on('change', this.onChange, this);
+  }
+
+  componentWillUnmount () {
+    store.off('change', this.onChange, this);
+  }
+
+  onChange () {
+    var page = store.getActivePage();
+    if (page.id == this.props.id) {
+      this.setState({visible : true});
+    } else {
+      this.setState({visible : false});
+    }
+  }
+
+  render () {
+    var tabClass = 'tab-pane ' + (this.state.visible ? 'visible' : 'hidden');
+    return (
+      <div className={tabClass} id={this.props.id}>
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
+
+class AdvancedReplicationController extends React.Component {
+
+  render () {
+    return (
+      <div>Advanced Replication</div>
+    );
+  }
+}
 
 
 class ReplicationController extends React.Component {
@@ -295,8 +443,8 @@ class ReplicationController extends React.Component {
           <div className="span7">
             <ConfirmButton id="replicate" text="Replicate" onClick={this.showPasswordModal} disabled={!confirmButtonEnabled}/>
             <a href="#" data-bypass="true" onClick={this.clear}>Clear</a>
-          </div>
         </div>
+      </div>
 
         <PasswordModal
           visible={passwordModalVisible}
@@ -466,6 +614,6 @@ ReplicationTargetRow.propTypes = {
 
 
 export default {
-  ReplicationController,
+  ReplicationPageController,
   PasswordModal
 };
