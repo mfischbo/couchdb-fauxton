@@ -63,10 +63,14 @@ class ReplicatorTabs extends React.Component {
 
   constructor () {
     super();
-    this.state = {
-      activePage : undefined
-    };
+    this.state = this.getStoreState();
     this.handleTabClick = this.handleTabClick.bind(this);
+  }
+
+  getStoreState () {
+    return {
+      activePage: store.getActivePage()
+    };
   }
 
   componentDidMount () {
@@ -81,14 +85,14 @@ class ReplicatorTabs extends React.Component {
   }
 
   onStoreChange () {
-    this.setState({activePage : store.getActivePage() });
+    this.setState(this.getStoreState());
   }
 
   handleTabClick (e) {
-    var radioName = e.target.value;
+    const radioName = e.target.value;
 
     this.props.pages.map((page) => {
-      if (page.label == radioName) {
+      if (page.label === radioName) {
         Actions.switchTab(page);
       }
     });
@@ -98,7 +102,7 @@ class ReplicatorTabs extends React.Component {
     return (
       this.props.pages.map((page, i) => {
 
-        const isActive = (page == store.getActivePage());
+        const isActive = (page === this.state.activePage);
         return (
           <TabElement
             key={i}
@@ -121,8 +125,8 @@ class ReplicatorTabs extends React.Component {
 };
 ReplicatorTabs.defaultProps = {
   pages : [
-    { id : 'simple-replication', label : 'Simple Replication'},
-    { id : 'advanced-replication', label : 'Advanced Replication'}
+    { id: 'simple-replication', label: 'Simple Replication'},
+    { id: 'advanced-replication', label: 'Advanced Replication'}
   ]
 };
 
@@ -133,8 +137,12 @@ class TabPage extends React.Component {
 
   constructor () {
     super();
-    this.state = {
-      visible : false
+    this.state = this.getStoreState();
+  }
+
+  getStoreState () {
+    return {
+      activePage: store.getActivePage()
     };
   }
 
@@ -147,21 +155,19 @@ class TabPage extends React.Component {
   }
 
   onChange () {
-    var page = store.getActivePage();
-    if (page.id == this.props.id) {
-      this.setState({visible : true});
-    } else {
-      this.setState({visible : false});
-    }
+    this.setState(this.getStoreState());
   }
 
   render () {
-    var tabClass = 'tab-pane ' + (this.state.visible ? 'visible' : 'hidden');
-    return (
-      <div className={tabClass} id={this.props.id}>
-        {this.props.children}
-      </div>
-    );
+    if (this.props.id === this.state.activePage.id) {
+      return (
+        <div id={this.props.id}>
+          {this.props.children}
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 }
 
@@ -170,7 +176,7 @@ class AdvancedReplicationController extends React.Component {
 
   render () {
     return (
-      <div>Advanced Replication</div>
+        <div>Advanced Replication</div>
     );
   }
 }
