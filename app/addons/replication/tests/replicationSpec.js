@@ -13,26 +13,38 @@ import Replication from '../base';
 import Resources from '../resources';
 import testUtils from '../../../../test/mocha/testUtils';
 
-//var assert = testUtils.assert,
-//    ViewSandbox = testUtils.ViewSandbox,
-//    viewSandbox;
-//
-//describe('Replication Addon', function () {
-//  describe('Replication View', function () {
-//    var view = new Views.ReplicationForm({
-//      collection: new Replication.DBList()
-//    });
-//    beforeEach(function (done) {
-//      viewSandbox = new ViewSandbox();
-//      viewSandbox.renderView(view, done);
-//    });
-//
-//    afterEach(function () {
-//      viewSandbox.remove();
-//    });
-//
-//    it("should render", function () {
-//      assert.ok(view.$el.length > 0);
-//    });
-//  });
-//});
+var assert = testUtils.assert,
+    ViewSandbox = testUtils.ViewSandbox,
+    viewSandbox;
+
+describe('Replication', () => {
+
+  describe('ReplicationTargetRow', () => {
+    beforeEach((done) => {
+      viewSandbox = new ViewSandbox();
+      viewSandbox.renderView(view, done);
+    });
+
+    afterEach(() => {
+      viewSandbox.remove();
+    });
+
+    it('new and existing replication targets should show a URL field', () => {
+    });
+
+    it('new local database fields have simple textfield', () => {
+
+    });
+
+    it('existing local databases fields have typeahead field', () => {
+
+    });
+
+  });
+
+
+  describe('ReplicationController', () => {
+
+  });
+
+});

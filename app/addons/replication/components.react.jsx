@@ -95,9 +95,8 @@ class ReplicationController extends React.Component {
     Actions.clearReplicationForm();
   }
 
-  showPasswordModal (e) {
-    const { replicationSource, sourceDatabase, remoteSource, remoteTarget, replicationTarget, targetDatabase, replicationType,
-      replicationDocName} = this.state;
+  showPasswordModal () {
+    const { replicationSource, replicationTarget } = this.state;
 
     var hasLocalSourceOrTarget = (replicationSource === Constants.REPLICATION_SOURCE.LOCAL ||
       replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE ||
@@ -467,5 +466,8 @@ ReplicationTargetRow.propTypes = {
 
 export default {
   ReplicationController,
-  PasswordModal
+  ReplicationSource,
+  ReplicationTarget,
+  ReplicationType,
+  ReplicationTargetRow
 };
