@@ -19,6 +19,7 @@ import Components from '../components/react-components.react';
 import base64 from 'base-64';
 import AuthActions from '../auth/actions';
 import AuthComponents from '../auth/components.react';
+import BookmarksController from './bookmark-manager/components.react';
 
 const store = Stores.replicationStore;
 const LoadLines = Components.LoadLines;
@@ -48,7 +49,10 @@ class ReplicationPageController extends React.Component {
         <ReplicationController />
       </TabPage>
       <TabPage id="advanced-replication">
-        <AdvancedReplicationController />
+        foobar
+      </TabPage>
+      <TabPage id="bookmark-manager">
+        <BookmarksController />
       </TabPage>
     </div>
     );
@@ -126,7 +130,8 @@ class ReplicatorTabs extends React.Component {
 ReplicatorTabs.defaultProps = {
   pages : [
     { id: 'simple-replication', label: 'Simple Replication'},
-    { id: 'advanced-replication', label: 'Advanced Replication'}
+    { id: 'advanced-replication', label: 'Advanced Replication'},
+    { id: 'bookmark-manager', label: 'Bookmarks'}
   ]
 };
 
@@ -170,17 +175,6 @@ class TabPage extends React.Component {
     }
   }
 }
-
-
-class AdvancedReplicationController extends React.Component {
-
-  render () {
-    return (
-        <div>Advanced Replication</div>
-    );
-  }
-}
-
 
 class ReplicationController extends React.Component {
   constructor (props) {
