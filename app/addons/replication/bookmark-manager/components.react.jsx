@@ -54,7 +54,8 @@ class BookmarkForm extends React.Component {
 
     getStoreState () {
         return {
-            bookmark: store.getFocusedBookmark()
+            bookmark: store.getFocusedBookmark(),
+            database: store.getFocusedDatabase()
         };
     }
 
@@ -70,20 +71,28 @@ class BookmarkForm extends React.Component {
         this.setState(this.getStoreState());
     }
 
-    removeDatabase (event, db) {
-        event.preventDefault();
-        Actions.removeDatabase(db);
-    }
-
     createDatabaseEntries () {
+        if (this.state.bookmark.databases.length == 0) {
+            return (
+                <tr>
+                    <td colSpan="3">
+                        <span>No databases available</span>
+                    </td>
+                </tr>
+            );
+        }
+
         return this.state.bookmark.databases.map(db => {
             return (
-                <tr key={db}>
+                <tr key={db.id}>
                     <td>{db.username}</td>
                     <td>{db.database}</td>
-                    <td>
+                    <td className="actions">
+                        <button className="btn icon-pencil"
+                            onClick={(e) => Actions.editDatabase(db)}>
+                        </button>
                         <button className="btn icon-trash"
-                            onClick={(e) => this.removeDatabase(e, db)}>
+                            onClick={(e) => Actions.removeDatabase(db)}>
                         </button>
                     </td>
                 </tr>
@@ -97,7 +106,7 @@ class BookmarkForm extends React.Component {
         return (
             <div className="bookmarks-form">
                 <h5>Add a bookmark</h5>
-                <div className="row">
+                <div className="row-fluid">
                     <div className="span4">
                         <label>Bookmark Name</label>
                         <input type="text" onChange={(event) => Actions.updateFormField('name', event.target.value)}
@@ -107,25 +116,28 @@ class BookmarkForm extends React.Component {
                         <input type="text" onChange={(event) => Actions.updateFormField('host', event.target.value)}
                             value={this.state.bookmark.host} className="form-input"/>
                     </div>
+
                     <div className="span4">
                         <label>Username</label>
                         <input type="text" onChange={(event) => Actions.updateFormField('username', event.target.value)}
-                             value={this.state.bookmark.username} className="form-input"/>
+                             value={this.state.database.username} className="form-input"/>
 
-                        <label>Add Database</label>
-                        <input type="text" onChange={(event) => Actions.updateFormField('database', event.target.value)}
-                            value={this.state.bookmark.database} className="form-input"/>
+                        <label>Database</label>
+                        <form className="form-inline">
+                            <input type="text" onChange={(event) => Actions.updateFormField('database', event.target.value)}
+                                value={this.state.database.database} className="form-input"/>
 
-                        <button type="button" className="btn btn-success"
-                            onClick={(event) => Actions.pushDatabase()}>Add</button>
+                            <button type="button" className="btn btn-success"
+                                onClick={(event) => Actions.pushDatabase()}>Add</button>
+                        </form>
                     </div>
 
                     <div className="span4">
                         <table className="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Database</th>
                                     <th>Username</th>
+                                    <th>Database</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -135,8 +147,8 @@ class BookmarkForm extends React.Component {
                         </table>
                     </div>
                 </div>
-                <div className="row">
-                    <div className="span8">
+                <div className="row-fluid">
+                    <div className="span12">
                         <div className="pull-right">
                             <button type="button" className="btn btn-danger"
                                 onClick={(e) => Actions.resetForm()}>Cancel</button>
@@ -176,13 +188,20 @@ class BookmarkTable extends React.Component {
     }
 
     createTableEntries () {
+        if (this.state.bookmarks.length == 0) {
+            return (
+                <tr>
+                    <td colSpan="3">No bookmarks available</td>
+                </tr>
+            );
+        }
         return (
            this.state.bookmarks.map(bm => {
                 return (
                     <tr key={bm.id}>
                         <td>{bm.name}</td>
                         <td>{bm.host}</td>
-                        <td>
+                        <td className="actions">
                             <button className="btn icon-pencil"
                                 onClick={(e) => Actions.editBookmark(bm)}></button>
                             <button className="btn icon-trash"

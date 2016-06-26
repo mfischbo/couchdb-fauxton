@@ -36,6 +36,15 @@ function pushDatabase () {
     });
 }
 
+function editDatabase (database) {
+    FauxtonAPI.dispatch({
+        type: ActionTypes.BOOKMARK_EDIT_DATABASE,
+        options: {
+            database: database
+        }
+    });
+}
+
 function removeDatabase (database) {
     FauxtonAPI.dispatch({
         type: ActionTypes.BOOKMARK_REMOVE_DATABASE,
@@ -74,6 +83,7 @@ export default {
     updateFormField,
     resetForm,
     pushDatabase,
+    editDatabase,
     removeDatabase,
     editBookmark,
     deleteBookmark,

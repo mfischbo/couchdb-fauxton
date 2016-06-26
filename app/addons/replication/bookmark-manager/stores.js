@@ -19,17 +19,6 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
         // array containing the users bookmarks
         this._bookmarks = [];
-
-        // some fake data for testing
-        this._bookmarks.push({
-            id : 12345,
-            name: 'Example Bookmark',
-            host: 'http://localhost:5984',
-            databases: [
-                {id: 12324, username: 'john.doe', database: 'db-1'},
-                {id: 11234, username: 'john.doe', database: 'db-2'}
-            ]
-        });
     },
 
     resetForm: function () {
@@ -38,9 +27,13 @@ const BookmarkStore = FauxtonAPI.Store.extend({
             id: 0,
             name: '',
             host: '',
-            username: '',
-            database: '',
             databases: []
+        };
+
+        this._focusedDatabase = {
+            id: '',
+            username: '',
+            database: ''
         };
     },
 
@@ -49,6 +42,10 @@ const BookmarkStore = FauxtonAPI.Store.extend({
      */
     getFocusedBookmark () {
         return this._focusedBookmark;
+    },
+
+    getFocusedDatabase () {
+        return this._focusedDatabase;
     },
 
     getBookmarks () {
@@ -60,14 +57,26 @@ const BookmarkStore = FauxtonAPI.Store.extend({
     },
 
     _pushDatabase () {
-        const username = this._focusedBookmark.username;
-        const db = this._focusedBookmark.database;
-        this._focusedBookmark.databases.push({
-            username: username,
-            database: db
-        });
-        this._focusedBookmark.username = '';
-        this._focusedBookmark.database = '';
+        if (this._focusedDatabase.id !== '') {
+            for (let i in this._focusedBookmark.databases) {
+                if (this._focusedBookmark.databases[i].id == this._focusedDatabase.id) {
+                    this._focusedBookmark.databases[i] = this._focusedDatabase;
+                }
+            }
+        } else {
+            this._focusedDatabase.id = this._focusedBookmark.databases.length + 1;
+            this._focusedBookmark.databases.push(this._focusedDatabase);
+        }
+        this._focusedDatabase = {
+            id: '',
+            username: '',
+            database: ''
+        };
+        this.triggerChange();
+    },
+
+    _editDatabase (database) {
+        this._focusedDatabase = database;
         this.triggerChange();
     },
 
@@ -95,7 +104,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
     _saveBookmark () {
         const bookmark = {
-            id : 132541,
+            id : this._bookmarks.length + 1,
             name: this._focusedBookmark.name,
             host: this._focusedBookmark.host,
             databases: this._focusedBookmark.databases
@@ -110,7 +119,11 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
         switch (action.type) {
             case ActionTypes.BOOKMARK_UPDATE_FORM_FIELD:
-                this._focusedBookmark[action.options.field] = action.options.value;
+                if (action.options.field === 'username' || action.options.field === 'database') {
+                    this._focusedDatabase[action.options.field] = action.options.value;
+                } else {
+                    this._focusedBookmark[action.options.field] = action.options.value;
+                }
                 this.triggerChange();
                 break;
 
@@ -121,6 +134,10 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
             case ActionTypes.BOOKMARK_PUSH_DATABASE:
                 this._pushDatabase();
+                break;
+
+            case ActionTypes.BOOKMARK_EDIT_DATABASE:
+                this._editDatabase(action.options.database);
                 break;
 
             case ActionTypes.BOOKMARK_REMOVE_DATABASE:
