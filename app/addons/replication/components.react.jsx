@@ -613,8 +613,8 @@ ReplicationTargetRow.propTypes = {
 
 
 export default {
+<<<<<<< HEAD
   ReplicationPageController,
-  PasswordModal,
   ReplicationController,
   ReplicationSource,
   ReplicationTarget,
