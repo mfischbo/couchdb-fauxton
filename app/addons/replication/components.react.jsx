@@ -128,6 +128,11 @@ class ReplicationController extends React.Component {
 
     const params = {};
 
+    // perform a little validatin here
+    if (!this.validate()) {
+      return;
+    }
+
     // source
     if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
       params.source = {
@@ -185,6 +190,22 @@ class ReplicationController extends React.Component {
     Actions.replicate(params);
   }
 
+  validate () {
+    const { replicationTarget, targetDatabase, databases } = this.state;
+
+    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE && _.contains(databases, targetDatabase)) {
+      FauxtonAPI.addNotification({
+        msg: 'The <code>' + targetDatabase + '</code> database already exists locally. Please enter another database name.',
+        type: 'error',
+        escape: false,
+        clear: true
+      });
+      return false;
+    }
+
+    return true;
+  }
+
   getReplicationSourceRow () {
     const { replicationSource, databases, sourceDatabase, remoteSource } = this.state;
 
@@ -216,7 +237,7 @@ class ReplicationController extends React.Component {
           <div className="span7">
             <input type="text" className="connection-url" placeholder="https://" value={remoteSource}
               onChange={(e) => Actions.updateFormField('remoteSource', e.target.value)}/>
-            <div className="connection-url-example">e.g. https://$USERNAME:$PASSWORD@server.com/$DATABASE</div>
+            <div className="connection-url-example">e.g. https://$REMOTE_USERNAME:$REMOTE_PASSWORD@$REMOTE_SERVER/$DATABASE</div>
           </div>
         </div>
       </div>
@@ -224,7 +245,8 @@ class ReplicationController extends React.Component {
   }
 
   render () {
-    const { loading, replicationSource, replicationTarget, replicationType, replicationDocName, passwordModalVisible } = this.state;
+    const { loading, replicationSource, replicationTarget, replicationType, replicationDocName, passwordModalVisible,
+      localSourceDatabaseKnown, localTargetDatabaseKnown } = this.state;
 
     if (loading) {
       return (
@@ -234,6 +256,12 @@ class ReplicationController extends React.Component {
 
     let confirmButtonEnabled = true;
     if (!replicationSource || !replicationTarget) {
+      confirmButtonEnabled = false;
+    }
+    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL && !localSourceDatabaseKnown) {
+      confirmButtonEnabled = false;
+    }
+    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE && !localTargetDatabaseKnown) {
       confirmButtonEnabled = false;
     }
 
@@ -292,7 +320,7 @@ class ReplicationController extends React.Component {
           <div className="span3">
           </div>
           <div className="span7">
-            <ConfirmButton id="replicate" text="Replicate" onClick={this.showPasswordModal} disabled={!confirmButtonEnabled}/>
+            <ConfirmButton id="replicate" text="Start Replication" onClick={this.showPasswordModal} disabled={!confirmButtonEnabled}/>
             <a href="#" data-bypass="true" onClick={this.clear}>Clear</a>
           </div>
         </div>
@@ -410,16 +438,19 @@ class ReplicationTargetRow extends React.Component {
 
     let targetLabel = 'Target Name:';
     let field = null;
+    let remoteHelpText = 'https://$USERNAME:$PASSWORD@server.com/$DATABASE';
 
     // new and existing remote DBs show a URL field
     if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE ||
         replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
       targetLabel = 'Database URL';
+      remoteHelpText = 'https://$REMOTE_USERNAME:$REMOTE_PASSWORD@$REMOTE_SERVER/$DATABASE';
+
       field = (
         <div>
           <input type="text" className="connection-url" placeholder="https://" value={remoteTarget}
             onChange={(e) => Actions.updateFormField('remoteTarget', e.target.value)} />
-          <div className="connection-url-example">e.g. https://$USERNAME:$PASSWORD@server.com/$DATABASE</div>
+          <div className="connection-url-example">e.g. {remoteHelpText}</div>
         </div>
       );
 
