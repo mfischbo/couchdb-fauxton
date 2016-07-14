@@ -69,6 +69,7 @@ function deleteDatabase (dbId) {
   });
 }
 
+
 export default {
   deleteDatabase: deleteDatabase,
   showDeleteDatabaseModal: showDeleteDatabaseModal,

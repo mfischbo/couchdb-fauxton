@@ -10,15 +10,31 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
+.faux-header__breadcrumbs {
+  .display-flex();
+}
 
-@import "../../../../../assets/less/variables.less";
+.faux-header__breadcrumbs-element {
+  margin: 0 4px 0 4px;
+  color: #333;
+  padding: 18px 10px;
+  font-size: 24px;
+  text-shadow: none;
+}
 
-.modal .cancel-link {
-  margin: 0 15px;
-  font-size: 14px;
-  color: @defaultText;
-  &:hover {
-    color: @brandPrimaryDark;
-    cursor: pointer;
-  }
+.faux-header__breadcrumbs-link:hover {
+  text-decoration: none;
+  cursor: hand;
+}
+
+.faux-header__breadcrumbs-divider {
+  width: 13px;
+  padding-top: 22px;
+  font-size: 20px;
+}
+
+.faux-header__controlbox-backlink {
+  border-right: 1px solid #ccc;
+  padding-left: 10px;
+  padding-right: 2px;
 }

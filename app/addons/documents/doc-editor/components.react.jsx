@@ -22,6 +22,8 @@ import GeneralComponents from "../../components/react-components.react";
 import { Modal } from "react-bootstrap";
 import Helpers from "../../../helpers";
 
+import DocumentResources from '../resources';
+
 var store = Stores.docEditorStore;
 
 var DocEditorController = React.createClass({
@@ -45,7 +47,6 @@ var DocEditorController = React.createClass({
   getDefaultProps: function () {
     return {
       database: {},
-      previousPage: '',
       isNewDoc: false
     };
   },
@@ -171,7 +172,7 @@ var DocEditorController = React.createClass({
               <i className="icon fonticon-ok-circled"></i> {saveButtonLabel}
             </button>
             <div>
-              <a href={this.props.previousPage} className="js-back cancel-button">Cancel</a>
+              <a href={FauxtonAPI.urls('allDocs', 'app', this.props.database.id)} className="js-back cancel-button">Cancel</a>
             </div>
           </div>
           <div className="alignRight">
@@ -190,6 +191,8 @@ var DocEditorController = React.createClass({
           visible={this.state.uploadModalVisible}
           doc={this.state.doc} />
         <CloneDocModal
+          doc={this.state.doc}
+          database={this.props.database}
           visible={this.state.cloneDocModalVisible}
           onSubmit={this.clearChanges} />
         <FauxtonComponents.ConfirmationModal
@@ -343,7 +346,7 @@ var UploadModal = React.createClass({
         <Modal.Body>
           <div className={errorClasses}>{this.state.errorMessage}</div>
           <div>
-            <form ref="uploadForm" className="form" method="post">
+            <form ref="uploadForm" className="form">
               <p>
                 Please select the file you want to upload as an attachment to this document. This creates a new
                 revision of the document, so it's not necessary to save after uploading.
@@ -369,9 +372,12 @@ var UploadModal = React.createClass({
 });
 
 
-var CloneDocModal = React.createClass({
+const CloneDocModal = React.createClass({
   propTypes: {
-    visible: React.PropTypes.bool.isRequired
+    visible: React.PropTypes.bool.isRequired,
+    doc: React.PropTypes.object,
+    database: React.PropTypes.object.isRequired,
+    onSubmit: React.PropTypes.func.isRequired
   },
 
   getInitialState: function () {
@@ -384,12 +390,14 @@ var CloneDocModal = React.createClass({
     if (this.props.onSubmit) {
       this.props.onSubmit();
     }
-    Actions.cloneDoc(this.state.uuid);
+
+    Actions.cloneDoc(this.props.database, this.props.doc, this.state.uuid);
   },
 
   componentDidUpdate: function () {
+    //XXX model-code in component
     if (this.state.uuid === null) {
-      var uuid = new FauxtonAPI.UUID();
+      var uuid = new DocumentResources.UUID();
       uuid.fetch().then(function () {
         this.setState({ uuid: uuid.next() });
       }.bind(this));
@@ -418,7 +426,7 @@ var CloneDocModal = React.createClass({
           <Modal.Title>Clone Document</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <form className="form" method="post">
+          <form className="form" onSubmit={(e) => { e.preventDefault(); this.cloneDoc(); }}>
             <p>
               Set new document's ID:
             </p>

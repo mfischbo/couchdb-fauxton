@@ -803,16 +803,16 @@ var StringEditModal = React.createClass({
     return (
       <Modal dialogClassName="string-editor-modal" show={this.props.visible} onHide={this.closeModal}>
         <Modal.Header closeButton={true}>
-          <Modal.Title>Edit text <span id="string-edit-header"></span></Modal.Title>
+          <Modal.Title>Edit Value <span id="string-edit-header"></span></Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div id="modal-error" className="hide alert alert-error"/>
           <div id="string-editor-wrapper"><div ref="stringEditor" className="doc-code"></div></div>
         </Modal.Body>
         <Modal.Footer>
-          <button className="cancel-button btn" onClick={this.closeModal}><i className="icon fonticon-circle-x"></i> Cancel</button>
+          <a className="cancel-link" onClick={this.closeModal}>Cancel</a>
           <button id="string-edit-save-btn" onClick={this.save} className="btn btn-success save">
-            <i className="fonticon-circle-check"></i> Save
+            <i className="fonticon-circle-check"></i> Modify Text
           </button>
         </Modal.Footer>
       </Modal>
@@ -1117,7 +1117,7 @@ var LoadLines = React.createClass({
   }
 });
 
-var ConfirmButton = React.createClass({
+const ConfirmButton = React.createClass({
   propTypes: {
     showIcon: React.PropTypes.bool,
     id: React.PropTypes.string,
@@ -1131,6 +1131,7 @@ var ConfirmButton = React.createClass({
 
   getDefaultProps: function () {
     return {
+      disabled: false,
       showIcon: true,
       customIcon: 'fonticon-ok-circled',
       buttonType: 'btn-success',
@@ -1156,6 +1157,7 @@ var ConfirmButton = React.createClass({
       <button
         onClick={onClick}
         type="submit"
+        disabled={disabled}
         data-id={this.props['data-id']}
         className={'btn save ' + buttonType}
         id={id}

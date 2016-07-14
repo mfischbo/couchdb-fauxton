@@ -40,12 +40,12 @@ const RevBrowserRouteObject = FauxtonAPI.RouteObject.extend({
   },
 
   crumbs: function () {
-    const previousPage = Helpers.getPreviousPageForDoc(this.database, this.wasCloned);
+    const backLink = FauxtonAPI.urls('allDocs', 'app', this.database.safeID());
     const docUrl = FauxtonAPI.urls('document', 'app', this.database.safeID(), this.docId);
 
     return [
-      { type: 'back', link: previousPage },
-      { name: this.docId + ' > Conflicts', link: '#' }
+      { name: this.database.safeID(), link: backLink },
+      { name: this.docId + ' > Conflicts' }
     ];
   },
 
@@ -73,7 +73,6 @@ const DocEditorRouteObject = FauxtonAPI.RouteObject.extend({
     this.docId = options[1];
     this.database = this.database || new Databases.Model({ id: this.databaseName });
     this.doc = new Documents.NewDoc(null, { database: this.database });
-    this.wasCloned = false;
   },
 
   routes: {
@@ -83,29 +82,16 @@ const DocEditorRouteObject = FauxtonAPI.RouteObject.extend({
     'database/:database/new': 'codeEditor'
   },
 
-  events: {
-    'route:duplicateDoc': 'duplicateDoc'
-  },
-
-  crumbs: function () {
-
-    if (this.docId) {
-      let previousPage = Helpers.getPreviousPageForDoc(this.database, this.wasCloned);
-
-      return [
-        { type: 'back', link: previousPage },
-        { name: this.docId, link: '#' }
-      ];
-    }
-
-    let previousPage = Helpers.getPreviousPageForDoc(this.database);
-    return [
-      { type: 'back', link: previousPage },
-      { name: 'New Document', link: '#' }
-    ];
-  },
+  crumbs: function () {},
 
   codeEditor: function (databaseName, docId) {
+    const backLink = FauxtonAPI.urls('allDocs', 'app', databaseName);
+
+    this.crumbs =  [
+      { name: databaseName, link: backLink },
+      { name: docId ? docId : 'New Document' }
+    ];
+
     this.database = new Databases.Model({ id: databaseName });
 
     if (docId) {
@@ -115,38 +101,12 @@ const DocEditorRouteObject = FauxtonAPI.RouteObject.extend({
     Actions.initDocEditor({ doc: this.doc, database: this.database });
     this.setComponent('#dashboard-content', ReactComponents.DocEditorController, {
       database: this.database,
-      isNewDoc: docId ? false : true,
-      previousPage: '#/' + Helpers.getPreviousPageForDoc(this.database)
+      isNewDoc: docId ? false : true
     });
   },
 
   showDesignDoc: function (database, ddoc) {
     this.codeEditor(database, '_design/' + ddoc);
-  },
-
-  duplicateDoc: function (newId) {
-    var doc = this.doc,
-        database = this.database;
-
-    this.docID = newId;
-
-    var that = this;
-    doc.copy(newId).then(function () {
-      doc.set({ _id: newId });
-      that.wasCloned = true;
-
-      FauxtonAPI.navigate('/database/' + database.safeID() + '/' + app.utils.safeURLName(newId), { trigger: true });
-      FauxtonAPI.addNotification({
-        msg: 'Document has been duplicated.'
-      });
-
-    }, function (error) {
-      var errorMsg = 'Could not duplicate document, reason: ' + error.responseText + '.';
-      FauxtonAPI.addNotification({
-        msg: errorMsg,
-        type: 'error'
-      });
-    });
   },
 
   apiUrl: function () {
