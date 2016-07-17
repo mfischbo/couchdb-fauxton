@@ -14,7 +14,7 @@ import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
-function initialize () {
+function getLocalDatabases () {
 
   $.ajax({
     url: '/_all_dbs',
@@ -30,6 +30,49 @@ function initialize () {
   });
 };
 
+/**
+ * Fetches _design documents for the specified database
+ * and extracts all provided filter functions.
+ * If no database provided filters are set to an empty array
+ */
+function updateFilterFunctions(database) {
+  if (database == undefined) {
+    FauxtonAPI.dispatch({
+      type: ActionTypes.FILTER_FUNCTIONS_UPDATED,
+      options: {
+        filters: []
+      }
+    });
+    return;
+  }
+
+  $.ajax({
+    url: '/' + database + '/_all_docs?startkey="_design/"&endkey="_design0"&include_docs=true',
+    contentType: 'application/json',
+    dataType: 'json'
+  }).then(function (result) {
+    const filters = [];
+    const rows = result.rows;
+    for (let i in rows) {
+      const doc = rows[i].doc;
+      if (doc.filters != undefined) {
+        for (let filter in doc.filters) {
+          filters.push(filter);
+        }
+      }
+    }
+
+    FauxtonAPI.dispatch({
+      type: ActionTypes.FILTER_FUNCTIONS_UPDATED,
+      options: {
+        filters: filters
+      }
+    });
+  });
+}
+
+
 export default {
-  initialize
+  getLocalDatabases,
+  updateFilterFunctions
 };

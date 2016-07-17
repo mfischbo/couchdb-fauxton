@@ -15,16 +15,28 @@ import ActionTypes from './actiontypes';
 
 const AdvancedReplicationStore = FauxtonAPI.Store.extend({
   initialize: function () {
-    this._sourceType = "LOCAL";
-    this._databases = [];
-  },
 
-  getSourceType: function () {
-    return this._sourceType;
+    // the list of local databases
+    this._databases = [];
+
+    // the list of available filter functions for _sourceDatabase
+    // this might be empty if _sourceType == 'REMOTE'
+    this._filterFunctions = [];
+
+    // the selected filter function to be used
+    this._filterFunction = '';
   },
 
   getLocalDatabases: function () {
     return this._databases;
+  },
+
+  getAvailableFilterFunctions: function () {
+    return this._filterFunctions;
+  },
+
+  getFilterFunction: function () {
+    return this._filterFunction;
   },
 
   dispatch: function (action) {
@@ -33,6 +45,12 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
       case ActionTypes.LOCAL_DATABASES_LOADED:
         this._databases = action.options.databases;
         this.triggerChange();
+        break;
+
+      case ActionTypes.FILTER_FUNCTIONS_UPDATED:
+        this._filterFunctions = action.options.filters;
+        this.triggerChange();
+        break;
     }
  }
 });

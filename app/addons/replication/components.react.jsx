@@ -20,6 +20,8 @@ import base64 from 'base-64';
 import AuthActions from '../auth/actions';
 import AuthComponents from '../auth/components.react';
 import BookmarksController from './bookmark-manager/components.react';
+import AdvancedReplicationController from './advanced-replicator/components.react';
+import ActivityController from './replication-activity/components.react';
 
 const store = Stores.replicationStore;
 const LoadLines = Components.LoadLines;
@@ -49,10 +51,13 @@ class ReplicationPageController extends React.Component {
         <ReplicationController />
       </TabPage>
       <TabPage id="advanced-replication">
-        foobar
+        <AdvancedReplicationController />
       </TabPage>
       <TabPage id="bookmark-manager">
         <BookmarksController />
+      </TabPage>
+      <TabPage id="replication-activity">
+        <ActivityController />
       </TabPage>
     </div>
     );
@@ -131,7 +136,8 @@ ReplicatorTabs.defaultProps = {
   pages : [
     { id: 'simple-replication', label: 'Simple Replication'},
     { id: 'advanced-replication', label: 'Advanced Replication'},
-    { id: 'bookmark-manager', label: 'Bookmarks'}
+    { id: 'bookmark-manager', label: 'Bookmarks'},
+    { id: 'replication-activity', label: 'Activity'}
   ]
 };
 
