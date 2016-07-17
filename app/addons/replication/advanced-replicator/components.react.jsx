@@ -279,14 +279,12 @@ class SourcePane extends React.Component {
 
         <div className="row">
           <div className="span3">Use Checkpoints</div>
-          <div className="checkbox inline">
+          <div className="span7 checkbox-wrapper">
             <input
               type="checkbox"
               checked={this.state.useCheckpoints === true}
               data-checked={this.state.useCheckpoints === true}
               onChange={(e) => this.onUseCheckpointsChange(e)}/>
-            <label onClick={(e) => this.onUseCheckpointsChange(e) }
-              className="label-checkbox-doclist"/>
           </div>
         </div>
       </div>
