@@ -51,6 +51,11 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
         this._filterFunctions = action.options.filters;
         this.triggerChange();
         break;
+
+      case ActionTypes.REPLICATION_START_REPLICATION:
+        this._startReplication();
+        this.triggerChange();
+        break;
     }
  }
 });

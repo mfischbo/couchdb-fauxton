@@ -9,6 +9,7 @@
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations under
 // the License.
+
 import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import React from 'react';
@@ -28,8 +29,27 @@ export default class AdvancedReplicationController extends React.Component {
 
   render() {
     return (
-      <div>
-        <SourcePane />
+      <div className="advanced-replicator-page">
+        <div className="row-fluid">
+          <div className="span4">
+            <SourcePane />
+          </div>
+          <div className="span6">
+            <TargetPane />
+          </div>
+        </div>
+        <div className="row-fluid">
+          <hr />
+        </div>
+        <div className="row-fluid">
+          <div className="span3">&nbsp;</div>
+          <div className="span6">
+            <button className="btn btn-success"
+              onClick={(e) => Actions.startReplication()}>
+              <i className="icon fonticon-ok-circled"></i> Start Replication
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -109,7 +129,7 @@ class DatabaseEntryRow extends React.Component {
       <div>
         <div className="row">
           <div className="span3">{this.props.sourceLabel}</div>
-          <div className="span7">
+          <div className="span4">
             <StyledSelect
               selectContent={this.createSourceTypeOptions()}
               selectChange={(e) => this.onSourceTypeChange(e)}
@@ -120,14 +140,14 @@ class DatabaseEntryRow extends React.Component {
 
         <div className="row">
           <div className="span3">&nbsp; </div>
-          <div className="span7">
+          <div className="span4">
             {databaseField}
           </div>
         </div>
 
         <div className="row">
           <div className="span3">{this.props.passwordLabel}</div>
-          <div className="span7">
+          <div className="span4">
             <input type="password" placeholder="Password"
               value={this.state.password || ''} onChange={(e) => this.onPasswordChange(e)}/>
           </div>
@@ -191,7 +211,6 @@ class SourcePane extends React.Component {
   }
 
   createFilterField() {
-    console.log('filter functions length: ', this.state.filterFunctions.length);
     if (this.state.filterFunctions.length === 0) {
       return (
         <StyledSelect
@@ -231,8 +250,8 @@ class SourcePane extends React.Component {
       return (
         <DatabaseEntryRow
           databases={this.state.localDatabases}
-          sourceLabel="Replication Source:"
-          passwordLabel="Source Password:"/>
+          sourceLabel="Replication Source"
+          passwordLabel="Source Password"/>
       );
   }
 
@@ -242,13 +261,13 @@ class SourcePane extends React.Component {
     const databases = this.createDatabaseRow();
 
     return (
-      <div className="advanced-replicator-page">
+      <div>
 
         {databases}
 
         <div className="row">
           <div className="span3">Proxy URL</div>
-          <div className="span7">
+          <div className="span4">
             <input type="text" placeholder="Proxy server URL (if required)"
               value={this.state.proxyUrl || ''} onChange={(e) => this.onProxyUrlChange(e)}/>
           </div>
@@ -256,7 +275,7 @@ class SourcePane extends React.Component {
 
         <div className="row">
           <div className="span3">Starting sequence</div>
-          <div className="span7">
+          <div className="span4">
             <input type="text" placeholder="Sequence number (optional)"
               value={this.state.sequenceNumber || ''} onChange={(e) => this.onSequenceNumberChange(e) }/>
           </div>
@@ -264,14 +283,14 @@ class SourcePane extends React.Component {
 
         <div className="row">
           <div className="span3">Filter</div>
-          <div className="span7">
+          <div className="span4">
             {filterField}
           </div>
         </div>
 
         <div className="row">
           <div className="span3">Query Parameters</div>
-          <div className="span7">
+          <div className="span4">
             <textarea placeholder="Query Parameters (optional)" disabled={this.state.filterFunction === ''}
               value={this.state.queryParams || ''} onChange={(e) => this.onQueryParamsChange(e)}/>
           </div>
@@ -279,7 +298,7 @@ class SourcePane extends React.Component {
 
         <div className="row">
           <div className="span3">Use Checkpoints</div>
-          <div className="span7 checkbox-wrapper">
+          <div className="span4 checkbox-wrapper">
             <input
               type="checkbox"
               checked={this.state.useCheckpoints === true}
@@ -290,4 +309,78 @@ class SourcePane extends React.Component {
       </div>
     );
   }
+}
+
+/**
+ * This class represents the target pane of a replication.
+ * It includes the name / URL of the target database, the password for replication
+ * as well as options for the replication type and the optional document id
+ * of the replication within the _replicator database
+ */
+class TargetPane extends React.Component {
+
+  constructor (props) {
+    super(props);
+    this.state = this.getStoreState();
+  }
+
+  getStoreState () {
+    return {
+      sourceType: 'LOCAL',
+      localDatabases: store.getLocalDatabases()
+    };
+  }
+
+  componentDidMount () {
+    store.on('change', this.onStoreChange, this);
+  }
+
+  componentWillUnmount () {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange () {
+    this.setState(this.getStoreState());
+  }
+
+  createDatabaseRow () {
+    if (this.state.localDatabases == undefined || this.state.localDatabases.length == 0) {
+      return null;
+    }
+
+    return (
+      <div className="row-fluid">
+
+        <DatabaseEntryRow
+          databases={this.state.localDatabases}
+          sourceLabel="Replication Target"
+          passwordLabel="Target Password"/>
+
+        <div className="row">
+          <div className="span3">Continuous</div>
+          <div className="span7">
+            <input type="checkbox" />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="span3">Replication ID</div>
+          <div className="span7">
+            <input type="text" placeholder="Document ID (optional)"/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  render () {
+    const databaseRow = this.createDatabaseRow();
+
+    return (
+      <div>
+        {databaseRow}
+      </div>
+    );
+  }
+
 }

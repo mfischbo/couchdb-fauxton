@@ -72,7 +72,16 @@ function updateFilterFunctions(database) {
 }
 
 
+function startReplication () {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_START_REPLICATION,
+    options: {}
+  });
+}
+
+
 export default {
   getLocalDatabases,
-  updateFilterFunctions
+  updateFilterFunctions,
+  startReplication
 };
