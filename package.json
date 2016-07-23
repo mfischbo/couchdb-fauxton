@@ -1,6 +1,6 @@
 {
   "name": "fauxton",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Fauxton is a modular CouchDB dashboard and Futon replacement.",
   "main": "./index.js",
   "directories": {
@@ -109,8 +109,19 @@
     "dev": "node ./devserver.js",
     "nightwatch": "grunt nightwatch",
     "start": "node ./bin/fauxton",
-    "prepublish": "node version-check.js && grunt release",
-    "create:animaldb": "./bin/create-animal-db"
+    "start-debug": "DIST=./dist/debug node ./bin/fauxton",
+    "preversion": "node version-check.js && grunt release",
+    "test-before-publish":"npm run preversion && npm install . -g",
+    "create:animaldb": "./bin/create-animal-db",
+    "docker:couchdb-up": "docker-compose -f ./docker/dc.selenium.yml up -d couchdb",
+    "docker:selenium-up": "docker-compose -f ./docker/dc.selenium.yml up -d selenium",
+    "docker:selenium-debug-up": "docker-compose -f ./docker/dc.selenium-debug.yml up -d selenium",
+    "docker:reset": "npm run docker:down && npm run docker:up",
+    "docker:logs": "docker logs couchdb",
+    "docker:up": "docker-compose -f ./docker/dc.selenium.yml up -d",
+    "docker:debug-up": "docker-compose -f ./docker/dc.selenium-debug.yml up -d",
+    "docker:down": "docker-compose -f ./docker/dc.selenium.yml down",
+    "remove-test-dbs": "node ./bin/remove-test-dbs.js"
   },
   "repository": {
     "type": "git",
