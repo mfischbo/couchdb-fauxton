@@ -14,17 +14,46 @@ import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
 const AdvancedReplicationStore = FauxtonAPI.Store.extend({
+
   initialize: function () {
 
     // the list of local databases
     this._databases = [];
 
     // the list of available filter functions for _sourceDatabase
-    // this might be empty if _sourceType == 'REMOTE'
+    // this might be empty if _source.sourceType == 'REMOTE'
     this._filterFunctions = [];
 
     // the selected filter function to be used
     this._filterFunction = '';
+
+    this._source = {
+      // The type of the replication source. This is either
+      // LOCAL or REMOTE
+      sourceType: 'LOCAL',
+
+      // the selected source database. This is either a database name
+      // if _sourceType == 'LOCAL' or a URL if _sourceType == 'REMOTE'
+      database: '',
+      password: '',
+      options: {
+        proxyUrl: '',
+        startingSequence: '',
+        filterFunction: '',
+        queryParameters: '',
+        useCheckpoints: false
+      }
+    };
+
+    this._target = {
+      sourceType: 'LOCAL',
+      database: '',
+      password: '',
+      options: {
+        continuous: false,
+        documentId: ''
+      }
+    };
   },
 
   getLocalDatabases: function () {
@@ -35,8 +64,72 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
     return this._filterFunctions;
   },
 
-  getFilterFunction: function () {
-    return this._filterFunction;
+  setAvailableFilterFunctions: function (filterFunctions) {
+    this._filterFunctions = filterFunctions;
+  },
+
+  getSourceType: function () {
+    return this._source.sourceType;
+  },
+
+  setSourceType: function (type) {
+    this._source.sourceType = type;
+  },
+
+  getTargetType: function () {
+    return this._target.sourceType;
+  },
+
+  setTargetType: function (type) {
+    this._target.sourceType = type;
+  },
+
+  getSourceDatabase: function () {
+    return this._source.database;
+  },
+
+  setSourceDatabase: function (database) {
+    this._source.database = database;
+  },
+
+  getTargetDatabase: function () {
+    return this._target.database;
+  },
+
+  setTargetDatabase: function (database) {
+    this._target.database = database;
+  },
+
+  getSourcePassword: function () {
+    return this._source.password;
+  },
+
+  setSourcePassword: function (password) {
+    this._source.password = password;
+  },
+
+  getTargetPassword: function () {
+    return this._target.password;
+  },
+
+  setTargetPassword: function (password) {
+    this._target.password = password;
+  },
+
+  setSourceOption: function (option, value) {
+    this._source.options[option] = value;
+  },
+
+  getSourceOption: function (option) {
+    return this._source.options[option];
+  },
+
+  setTargetOption: function (option, value) {
+    this._target.options[option] = value;
+  },
+
+  getTargetOption: function (option) {
+    return this._target.options[option];
   },
 
   dispatch: function (action) {
@@ -52,6 +145,46 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
         this.triggerChange();
         break;
 
+      case ActionTypes.REPLICATION_SET_SOURCE_TYPE:
+        this._source.sourceType = action.options.type;
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_TARGET_TYPE:
+        this._target.sourceType = action.options.type;
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_SOURCE_DB:
+        this.setSourceDatabase(action.options.database);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_TARGET_DB:
+        this.setTargetDatabase(action.options.database);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_SOURCE_PASSWORD:
+        this._source.password = action.options.password;
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_TARGET_PASSWORD:
+        this._target.password = action.options.password;
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_SET_SOURCE_OPTION:
+        this.setSourceOption(action.options.key, action.options.value);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.ADV_REPLICATION_SET_TARGET_OPTION:
+        this.setTargetOption(action.options.key, action.options.value);
+        this.triggerChange();
+        break;
+
       case ActionTypes.REPLICATION_START_REPLICATION:
         this._startReplication();
         this.triggerChange();
@@ -61,6 +194,7 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
 });
 
 const advancedReplicationStore = new AdvancedReplicationStore();
+
 advancedReplicationStore.dispatchToken =
   FauxtonAPI.dispatcher.register(advancedReplicationStore.dispatch);
 

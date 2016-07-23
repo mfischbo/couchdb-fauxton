@@ -67,31 +67,59 @@ class DatabaseEntryRow extends React.Component {
     this.state = this.getStoreState();
   }
 
+  componentWillMount () {
+    store.on('change', this.onStoreChange, this);
+  }
+
+  componentWillUnmount () {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange () {
+    this.setState(this.getStoreState());
+  }
+
   getStoreState () {
-    return {
-      sourceType: 'LOCAL',
-      database: '',
-      password: '',
-    };
-  }
-
-  onSourceTypeChange (event) {
-    this.setState({ sourceType: event.target.value });
-  }
-
-  onDatabaseChange (value) {
-    this.setState({database: value});
-
-    // if we have a valid database we query for filter options
-    if (this.props.databases.indexOf(this.state.database) > -1) {
-      Actions.updateFilterFunctions(this.state.database);
+    if (this.props.type == 'SOURCE') {
+      return {
+        sourceType: store.getSourceType(),
+        database: store.getSourceDatabase(),
+        password: store.getSourcePassword()
+      };
     } else {
-      Actions.updateFilterFunctions();
+      return {
+        sourceType: store.getTargetType(),
+        database: store.getTargetDatabase(),
+        password: store.getTargetPassword()
+      };
     }
   }
 
-  onPasswordChange (event) {
-    this.setState({ password: event.target.value });
+  onDatabaseChange(value) {
+    if (this.props.type == 'SOURCE') {
+      if (store.getLocalDatabases().indexOf(value) > -1) {
+        Actions.updateFilterFunctions(value);
+      }
+      Actions.setSourceDatabase(value);
+    } else {
+      Actions.setTargetDatabase(value);
+    }
+  }
+
+  onSourceTypeChange (value) {
+    if (this.props.type == 'SOURCE') {
+      Actions.setSourceType(value);
+    } else {
+      Actions.setTargetType(value);
+    }
+  }
+
+  onPasswordChange (value) {
+    if (this.props.type == 'SOURCE') {
+      Actions.setSourcePassword(value);
+    } else {
+      Actions.setTargetPassword(value);
+    }
   }
 
   createDatabaseField () {
@@ -120,9 +148,8 @@ class DatabaseEntryRow extends React.Component {
     });
   }
 
-
-
-  render () {
+  render() {
+    const sourceTypeOptions = this.createSourceTypeOptions();
     const databaseField = this.createDatabaseField();
 
     return (
@@ -131,8 +158,8 @@ class DatabaseEntryRow extends React.Component {
           <div className="span3">{this.props.sourceLabel}</div>
           <div className="span4">
             <StyledSelect
-              selectContent={this.createSourceTypeOptions()}
-              selectChange={(e) => this.onSourceTypeChange(e)}
+              selectContent={sourceTypeOptions}
+              selectChange={(event) => this.onSourceTypeChange(event.target.value)}
               selectValue={this.state.sourceType}
               selectId="replication-source-select"/>
           </div>
@@ -149,7 +176,8 @@ class DatabaseEntryRow extends React.Component {
           <div className="span3">{this.props.passwordLabel}</div>
           <div className="span4">
             <input type="password" placeholder="Password"
-              value={this.state.password || ''} onChange={(e) => this.onPasswordChange(e)}/>
+              value={this.state.password || ''}
+              onChange={(event) => this.onPasswordChange(event.target.value)}/>
           </div>
         </div>
       </div>
@@ -171,14 +199,17 @@ class SourcePane extends React.Component {
 
   getStoreState () {
     return {
-      sourceType: 'LOCAL',
       localDatabases: store.getLocalDatabases(),
       filterFunctions: store.getAvailableFilterFunctions(),
-      filterFunction: store.getFilterFunction()
+      proxyUrl: store.getSourceOption('proxyUrl'),
+      startingSequence: store.getSourceOption('startingSequence'),
+      filterFunction: store.getSourceOption('filterFunction'),
+      queryParameters: store.getSourceOption('queryParameters'),
+      useCheckpoints: store.getSourceOption('useCheckpoints')
     };
   }
 
-  onStoreChange() {
+  onStoreChange () {
     this.setState(this.getStoreState());
   }
 
@@ -190,32 +221,12 @@ class SourcePane extends React.Component {
     store.off('change', this.onStoreChange, this);
   }
 
-  onProxyUrlChange (event) {
-    this.setState({ proxyUrl: event.target.value });
-  }
-
-  onSequenceNumberChange (event) {
-    this.setState({ sequenceNumber: event.target.value });
-  }
-
-  onFilterFunctionChange (event) {
-    this.setState({ filterFunction: event.target.value });
-  }
-
-  onQueryParamsChange (event) {
-    this.setState({ queryParams: event.target.value });
-  }
-
-  onUseCheckpointsChange(event) {
-    this.setState({ useCheckpoints: event.target.checked });
-  }
-
   createFilterField() {
     if (this.state.filterFunctions.length === 0) {
       return (
         <StyledSelect
           selectContent={[]}
-          selectChange={(e) => { }}
+          selectChange={(e) => Actions.setSourceOption('filterFunction', e.target.value)}
           selectValue=""
           selectId="replication-filter-select"/>
       );
@@ -236,12 +247,12 @@ class SourcePane extends React.Component {
           selectContent={optionsList}
           selectId="replication-filter-select"
           selectValue={this.state.filterFunction}
-          selectChange={(e) => this.onFilterFunctionChange(e) }/>
+          selectChange={(e) => Actions.setSourceOption('filterFunction', e.target.value) }/>
       );
     }
   }
 
-  createDatabaseRow() {
+  createDatabaseRow () {
     // list of databases is loaded async so we need to ensure to have them
     // available when setting the props of the child component
     if (this.state.localDatabases == undefined || this.state.localDatabases.length === 0)
@@ -249,6 +260,7 @@ class SourcePane extends React.Component {
     else
       return (
         <DatabaseEntryRow
+          type="SOURCE"
           databases={this.state.localDatabases}
           sourceLabel="Replication Source"
           passwordLabel="Source Password"/>
@@ -256,7 +268,7 @@ class SourcePane extends React.Component {
   }
 
 
-  render() {
+  render () {
     const filterField = this.createFilterField();
     const databases = this.createDatabaseRow();
 
@@ -269,7 +281,8 @@ class SourcePane extends React.Component {
           <div className="span3">Proxy URL</div>
           <div className="span4">
             <input type="text" placeholder="Proxy server URL (if required)"
-              value={this.state.proxyUrl || ''} onChange={(e) => this.onProxyUrlChange(e)}/>
+              value={this.state.proxyUrl}
+              onChange={(e) => Actions.setSourceOption('proxyUrl', e.target.value)}/>
           </div>
         </div>
 
@@ -277,7 +290,8 @@ class SourcePane extends React.Component {
           <div className="span3">Starting sequence</div>
           <div className="span4">
             <input type="text" placeholder="Sequence number (optional)"
-              value={this.state.sequenceNumber || ''} onChange={(e) => this.onSequenceNumberChange(e) }/>
+              value={this.state.startingSequence}
+              onChange={(e) => Actions.setSourceOption('startingSequence', e.target.value) }/>
           </div>
         </div>
 
@@ -292,7 +306,8 @@ class SourcePane extends React.Component {
           <div className="span3">Query Parameters</div>
           <div className="span4">
             <textarea placeholder="Query Parameters (optional)" disabled={this.state.filterFunction === ''}
-              value={this.state.queryParams || ''} onChange={(e) => this.onQueryParamsChange(e)}/>
+              value={this.state.queryParameters}
+              onChange={(e) => Actions.setSourceOption('queryParameters', e.target.value) }/>
           </div>
         </div>
 
@@ -303,7 +318,7 @@ class SourcePane extends React.Component {
               type="checkbox"
               checked={this.state.useCheckpoints === true}
               data-checked={this.state.useCheckpoints === true}
-              onChange={(e) => this.onUseCheckpointsChange(e)}/>
+              onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints)}/>
           </div>
         </div>
       </div>
@@ -326,8 +341,10 @@ class TargetPane extends React.Component {
 
   getStoreState () {
     return {
-      sourceType: 'LOCAL',
-      localDatabases: store.getLocalDatabases()
+      sourceType: store.getTargetType(),
+      localDatabases: store.getLocalDatabases(),
+      continuous: store.getTargetOption('continuous'),
+      documentId: store.getTargetOption('documentId')
     };
   }
 
@@ -349,27 +366,11 @@ class TargetPane extends React.Component {
     }
 
     return (
-      <div className="row-fluid">
-
-        <DatabaseEntryRow
-          databases={this.state.localDatabases}
-          sourceLabel="Replication Target"
-          passwordLabel="Target Password"/>
-
-        <div className="row">
-          <div className="span3">Continuous</div>
-          <div className="span7">
-            <input type="checkbox" />
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="span3">Replication ID</div>
-          <div className="span7">
-            <input type="text" placeholder="Document ID (optional)"/>
-          </div>
-        </div>
-      </div>
+      <DatabaseEntryRow
+        type="TARGET"
+        databases={this.state.localDatabases}
+        sourceLabel="Replication Target"
+        passwordLabel="Target Password"/>
     );
   }
 
@@ -377,8 +378,26 @@ class TargetPane extends React.Component {
     const databaseRow = this.createDatabaseRow();
 
     return (
-      <div>
+      <div className="row-fluid">
         {databaseRow}
+
+        <div className="row">
+          <div className="span3">Continuous</div>
+          <div className="span7">
+            <input type="checkbox"
+              checked={this.state.continuous === true}
+              onChange={(e) => Actions.setTargetOption('continuous', !this.state.continuous) }/>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="span3">Replication ID</div>
+          <div className="span7">
+            <input type="text" placeholder="Document ID (optional)"
+              value={this.state.documentId}
+              onChange={(e) => Actions.setTargetOption('documentId', e.target.value) }/>
+          </div>
+        </div>
       </div>
     );
   }

@@ -14,8 +14,11 @@ import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
-function getLocalDatabases () {
 
+/**
+ * Fetches all local available databases and notifies the store
+ */
+function getLocalDatabases () {
   $.ajax({
     url: '/_all_dbs',
     contentType: 'applicaiton/json',
@@ -27,6 +30,12 @@ function getLocalDatabases () {
         databases: databases
       }
     });
+  }, function (xhr) {
+    FauxtonAPI.addNotification({
+      msg: 'An error occured fetching the local database names',
+      type: 'error',
+      clear: true
+    });
   });
 };
 
@@ -35,39 +44,152 @@ function getLocalDatabases () {
  * and extracts all provided filter functions.
  * If no database provided filters are set to an empty array
  */
-function updateFilterFunctions(database) {
-  if (database == undefined) {
-    FauxtonAPI.dispatch({
-      type: ActionTypes.FILTER_FUNCTIONS_UPDATED,
-      options: {
-        filters: []
-      }
-    });
-    return;
-  }
+function updateFilterFunctions (database) {
 
-  $.ajax({
+  const promise = $.ajax({
     url: '/' + database + '/_all_docs?startkey="_design/"&endkey="_design0"&include_docs=true',
     contentType: 'application/json',
     dataType: 'json'
   }).then(function (result) {
-    const filters = [];
-    const rows = result.rows;
-    for (let i in rows) {
-      const doc = rows[i].doc;
-      if (doc.filters != undefined) {
-        for (let filter in doc.filters) {
-          filters.push(filter);
-        }
-      }
-    }
-
+    const filters = _retrieveFilterFunctions(result);
     FauxtonAPI.dispatch({
       type: ActionTypes.FILTER_FUNCTIONS_UPDATED,
       options: {
         filters: filters
       }
     });
+    }, function (xhr) {
+      FauxtonAPI.addNotification({
+        msg: 'Failed to fetch filter functions for database <code>' + database + '</code>',
+        type: 'error',
+        clear: true
+      });
+  });
+}
+
+
+/**
+ * Private function to retrieve the available filter functions
+ * on a set of design documents
+ * @param result The response body of a '_all_docs' request
+ * @returns An array of strings representing filter function names
+ */
+function _retrieveFilterFunctions (result) {
+  const filters = [];
+  const rows = result.rows;
+  for (let i in rows) {
+    const doc = rows[i].doc;
+    if (doc.filters != undefined) {
+      for (let filter in doc.filters) {
+        filters.push(filter);
+      }
+    }
+  }
+  return filters;
+}
+
+
+/**
+ * Sets the type for the replication source.
+ * @param value The value for the source type. Either 'LOCAL' or 'REMOTE'
+ */
+function setSourceType (value) {
+  if (value !== 'LOCAL' && value !== 'REMOTE')
+    return;
+
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_SOURCE_TYPE,
+    options: {
+      type: value
+    }
+  });
+}
+
+/**
+ * Sets the type for the replication target
+ * @param value The value for the target type. Either 'LOCAL' or 'REMOTE'
+ */
+function setTargetType(value) {
+  if (value !== 'LOCAL' && value !== 'REMOTE')
+    return;
+
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_TARGET_TYPE,
+    options: {
+      type: value
+    }
+  });
+}
+
+/**
+ * Action to be triggered when the user selects a new database.
+ * @param database The name of the database selected
+ */
+function setSourceDatabase (database) {
+
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_SOURCE_DB,
+    options: {
+      database: database
+    }
+  });
+}
+
+/**
+ * Action to be triggered when the user selects a new target database.
+ */
+function setTargetDatabase (database) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_TARGET_DB,
+    options: {
+      database: database
+    }
+  });
+}
+
+
+/**
+ * Sets the users password for the source database
+ */
+function setSourcePassword (value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_SOURCE_PASSWORD,
+    options: {
+      password: value
+    }
+  });
+}
+
+/**
+ * Sets the users password for the target database
+ * @param value The password to be set
+ */
+function setTargetPassword (value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_TARGET_PASSWORD,
+    options: {
+      password: value
+    }
+  });
+}
+
+function setSourceOption (key, value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_SET_SOURCE_OPTION,
+    options: {
+      key: key,
+      value: value
+    }
+  });
+}
+
+function setTargetOption(key, value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.ADV_REPLICATION_SET_TARGET_OPTION,
+    options: {
+      key: key,
+      value: value
+    }
   });
 }
 
@@ -82,6 +204,14 @@ function startReplication () {
 
 export default {
   getLocalDatabases,
+  setSourceType,
+  setTargetType,
+  setSourceDatabase,
+  setTargetDatabase,
+  setSourcePassword,
+  setTargetPassword,
+  setSourceOption,
+  setTargetOption,
   updateFilterFunctions,
   startReplication
 };
