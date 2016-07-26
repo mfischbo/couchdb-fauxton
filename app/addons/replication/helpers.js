@@ -5,6 +5,13 @@ function getDatabaseLabel (db) {
   return matches[0];
 }
 
+function getReactSelectOptions (list) {
+  return _.map(list, (item) => {
+    return { value: item, label: item };
+  });
+}
+
 export default {
-  getDatabaseLabel
+  getDatabaseLabel,
+  getReactSelectOptions
 };

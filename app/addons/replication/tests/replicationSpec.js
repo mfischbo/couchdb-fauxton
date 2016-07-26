@@ -103,7 +103,7 @@ describe('Replication', () => {
       assert.equal($(ReactDOM.findDOMNode(el)).find('input.new-local-db').length, 0);
 
       // (the typeahead field has a search icon)
-      assert.equal($(ReactDOM.findDOMNode(el)).find('.icon-search').length, 1);
+      assert.equal($(ReactDOM.findDOMNode(el)).find('.Select--single').length, 1);
     });
 
   });
@@ -169,7 +169,6 @@ describe('Replication', () => {
           options: { databases: ['one', 'two', 'three'] }
         });
 
-        updateField('sourceDatabase', 'one');
         updateField('replicationTarget', Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE);
         updateField('targetDatabase', 'two');
 

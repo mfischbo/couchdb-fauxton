@@ -45,7 +45,7 @@ function changePassword (password, passwordConfirm) {
   var nodes = nodesStore.getNodes();
   var promise = FauxtonAPI.session.changePassword(password, passwordConfirm, nodes[0].node);
 
-  promise.done(function () {
+  promise.then(() => {
     FauxtonAPI.addNotification({ msg: FauxtonAPI.session.messages.changePassword });
     FauxtonAPI.dispatch({ type: ActionTypes.AUTH_CLEAR_CHANGE_PWD_FIELDS });
   });
@@ -71,16 +71,14 @@ function createAdmin (username, password, loginAfter) {
   var nodes = nodesStore.getNodes();
   var promise = FauxtonAPI.session.createAdmin(username, password, loginAfter, nodes[0].node);
 
-  promise.then(function () {
+  promise.then(() => {
     FauxtonAPI.addNotification({ msg: FauxtonAPI.session.messages.adminCreated });
     if (loginAfter) {
       FauxtonAPI.navigate('/');
     } else {
       FauxtonAPI.dispatch({ type: ActionTypes.AUTH_CLEAR_CREATE_ADMIN_FIELDS });
     }
-  });
-
-  promise.fail(function (xhr, type, msg) {
+  }, (xhr, type, msg) => {
     msg = xhr;
     if (arguments.length === 3) {
       msg = xhr.responseJSON.reason;

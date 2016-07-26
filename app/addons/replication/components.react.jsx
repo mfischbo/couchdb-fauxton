@@ -15,14 +15,15 @@ import React from 'react';
 import Stores from './stores';
 import Actions from './actions';
 import Constants from './constants';
+import Helpers from './helpers';
 import Components from '../components/react-components.react';
 import base64 from 'base-64';
 import AuthActions from '../auth/actions';
 import AuthComponents from '../auth/components.react';
+import ReactSelect from 'react-select';
 
 const store = Stores.replicationStore;
 const LoadLines = Components.LoadLines;
-const TypeaheadField = Components.TypeaheadField;
 const StyledSelect = Components.StyledSelect;
 const ConfirmButton = Components.ConfirmButton;
 const PasswordModal = AuthComponents.PasswordModal;
@@ -75,21 +76,6 @@ class ReplicationController extends React.Component {
     this.setState(this.getStoreState());
   }
 
-  // the four local replication targets all show slightly different fields
-  getReplicationTargetRow () {
-    const { replicationTarget, remoteTarget, databases, targetDatabase } = this.state;
-    if (!replicationTarget) {
-      return null;
-    }
-    return (
-      <ReplicationTargetRow
-        remoteTarget={remoteTarget}
-        replicationTarget={replicationTarget}
-        databases={databases}
-        targetDatabase={targetDatabase}/>
-    );
-  }
-
   clear (e) {
     e.preventDefault();
     Actions.clearReplicationForm();
@@ -123,50 +109,16 @@ class ReplicationController extends React.Component {
   }
 
   submit () {
-    const { replicationSource, sourceDatabase, remoteSource, remoteTarget, replicationTarget, targetDatabase, replicationType,
-      replicationDocName} = this.state;
+    const { replicationTarget, replicationType, replicationDocName} = this.state;
 
-    const params = {};
-
-    // perform a little validating here
     if (!this.validate()) {
       return;
     }
 
-    // source
-    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
-      params.source = {
-        headers: this.getAuthHeaders(),
-        url: window.location.origin + '/' + sourceDatabase
-      };
-    } else {
-      params.source = remoteSource;
-    }
-
-    // target
-    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE) {
-      params.target = {
-        headers: this.getAuthHeaders(),
-        url: window.location.origin + '/' + targetDatabase
-      };
-    } else if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
-      params.target = remoteTarget;
-    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
-
-      // check to see if we really need to send headers here or can just do the ELSE clause in all scenarioe
-      if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
-        params.target = {
-          headers: this.getAuthHeaders(),
-          url: window.location.origin + '/' + targetDatabase
-        };
-      } else {
-        const port = window.location.port === '' ? '' : ':' + window.location.port;
-        params.target = window.location.protocol + '//' + this.getUsername() + ':' + this.state.password + '@'
-          + window.location.hostname + port + '/' + targetDatabase;
-      }
-    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE) {
-      params.target = remoteTarget;
-    }
+    const params = {
+      source: this.getSource(),
+      target: this.getTarget()
+    };
 
     if (_.contains([Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE], replicationTarget)) {
       params.create_target = true;
@@ -188,6 +140,49 @@ class ReplicationController extends React.Component {
     };
 
     Actions.replicate(params);
+  }
+
+  getSource () {
+    const { replicationSource, sourceDatabase, remoteSource } = this.state;
+    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+      return {
+        headers: this.getAuthHeaders(),
+        url: window.location.origin + '/' + sourceDatabase
+      };
+    } else {
+      return remoteSource;
+    }
+  }
+
+  getTarget () {
+    const { replicationTarget, targetDatabase, remoteTarget, replicationSource, password } = this.state;
+
+    let target;
+    if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE) {
+      target = {
+        headers: this.getAuthHeaders(),
+        url: window.location.origin + '/' + targetDatabase
+      };
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.EXISTING_REMOTE_DATABASE) {
+      target = remoteTarget;
+    } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
+
+      // check to see if we really need to send headers here or can just do the ELSE clause in all scenarioe
+      if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+        target = {
+          headers: this.getAuthHeaders(),
+          url: window.location.origin + '/' + targetDatabase
+        };
+      } else {
+        const port = window.location.port === '' ? '' : ':' + window.location.port;
+        target = window.location.protocol + '//' + this.getUsername() + ':' + password + '@'
+          + window.location.hostname + port + '/' + targetDatabase;
+      }
+    } else {
+      target = remoteTarget;
+    }
+
+    return target;
   }
 
   validate () {
@@ -225,47 +220,10 @@ class ReplicationController extends React.Component {
     return true;
   }
 
-  getReplicationSourceRow () {
-    const { replicationSource, databases, sourceDatabase, remoteSource } = this.state;
-
-    if (!replicationSource) {
-      return null;
-    }
-
-    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
-      return (
-        <div className="row">
-          <div className="span3">
-            Source Name:
-          </div>
-          <div className="span7">
-            <TypeaheadField
-              list={databases}
-              placeholder="Database name"
-              onChange={(val) => Actions.updateFormField('sourceDatabase', val)}
-              value={sourceDatabase}/>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <div className="row">
-          <div className="span3">Database URL:</div>
-          <div className="span7">
-            <input type="text" className="connection-url" placeholder="https://" value={remoteSource}
-              onChange={(e) => Actions.updateFormField('remoteSource', e.target.value)}/>
-            <div className="connection-url-example">e.g. https://$REMOTE_USERNAME:$REMOTE_PASSWORD@$REMOTE_SERVER/$DATABASE</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   render () {
     const { loading, replicationSource, replicationTarget, replicationType, replicationDocName, passwordModalVisible,
-      localSourceDatabaseKnown, localTargetDatabaseKnown } = this.state;
+      localSourceDatabaseKnown, databases, localTargetDatabaseKnown, sourceDatabase, remoteSource, remoteTarget,
+      targetDatabase } = this.state;
 
     if (loading) {
       return (
@@ -296,7 +254,15 @@ class ReplicationController extends React.Component {
               onChange={(repSource) => Actions.updateFormField('replicationSource', repSource)}/>
           </div>
         </div>
-        {this.getReplicationSourceRow()}
+
+        {replicationSource ?
+          <ReplicationSourceRow
+            replicationSource={replicationSource}
+            databases={databases}
+            sourceDatabase={sourceDatabase}
+            remoteSource={remoteSource}
+            onChange={(val) => Actions.updateFormField('remoteSource', val)}
+          /> : null}
 
         <hr size="1"/>
 
@@ -310,7 +276,13 @@ class ReplicationController extends React.Component {
               onChange={(repTarget) => Actions.updateFormField('replicationTarget', repTarget)}/>
           </div>
         </div>
-        {this.getReplicationTargetRow()}
+        {replicationTarget ?
+          <ReplicationTargetRow
+            remoteTarget={remoteTarget}
+            replicationTarget={replicationTarget}
+            databases={databases}
+            targetDatabase={targetDatabase}
+          /> : null}
 
         <hr size="1"/>
 
@@ -359,6 +331,51 @@ class ReplicationController extends React.Component {
 }
 
 
+class ReplicationSourceRow extends React.Component {
+  render () {
+    const { replicationSource, databases, sourceDatabase, remoteSource, onChange} = this.props;
+
+    if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
+      return (
+        <div className="row">
+          <div className="span3">
+            Source Name:
+          </div>
+          <div className="span7">
+            <ReactSelect
+              value={sourceDatabase}
+              placeholder="Database name"
+              options={Helpers.getReactSelectOptions(databases)}
+              clearable={false}
+              onChange={(selected) => Actions.updateFormField('sourceDatabase', selected.value)} />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <div className="row">
+          <div className="span3">Database URL:</div>
+          <div className="span7">
+            <input type="text" className="connection-url" placeholder="https://" value={remoteSource}
+              onChange={(e) => onChange(e.target.value)} />
+            <div className="connection-url-example">e.g. https://$REMOTE_USERNAME:$REMOTE_PASSWORD@$REMOTE_SERVER/$DATABASE</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+ReplicationSourceRow.propTypes = {
+  replicationSource: React.PropTypes.string.isRequired,
+  databases: React.PropTypes.array.isRequired,
+  sourceDatabase: React.PropTypes.string.isRequired,
+  remoteSource: React.PropTypes.string.isRequired,
+  onChange: React.PropTypes.func.isRequired
+};
+
+
 class ReplicationSource extends React.Component {
   getOptions () {
     const options = [
@@ -366,7 +383,7 @@ class ReplicationSource extends React.Component {
       { value: Constants.REPLICATION_SOURCE.LOCAL, label: 'Local database' },
       { value: Constants.REPLICATION_SOURCE.REMOTE, label: 'Remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
@@ -398,7 +415,7 @@ class ReplicationTarget extends React.Component {
       { value: Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, label: 'New local database' },
       { value: Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE, label: 'New remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
@@ -487,11 +504,12 @@ class ReplicationTargetRow extends React.Component {
     // existing local databases have a typeahead field
     } else {
       field = (
-        <TypeaheadField
-          list={databases}
+        <ReactSelect
+          value={targetDatabase}
+          options={Helpers.getReactSelectOptions(databases)}
           placeholder="Database name"
-          onChange={(val) => Actions.updateFormField('targetDatabase', val)}
-          value={targetDatabase} />
+          clearable={false}
+          onChange={(selected) => Actions.updateFormField('targetDatabase', selected.value)} />
       );
     }
 

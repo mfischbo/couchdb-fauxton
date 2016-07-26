@@ -1172,60 +1172,6 @@ const ConfirmButton = React.createClass({
 });
 
 
-// A simple, unstyled typeahead widget that can be used for typeahead on any arbitrary strings.
-// This should replace the more specific <JumpToDatabaseWidget />
-var TypeaheadField = React.createClass({
-  propTypes: {
-    list: React.PropTypes.array.isRequired,
-    value: React.PropTypes.string.isRequired,
-    onChange: React.PropTypes.func.isRequired,
-    placeholder: React.PropTypes.string,
-    autoFocus: React.PropTypes.bool
-  },
-
-  getDefaultProps: function () {
-    return {
-      placeholder: 'Type ahead',
-      autoFocus: false
-    };
-  },
-
-  componentDidMount: function () {
-    this.updateTypeahead();
-  },
-
-  updateTypeahead: function () {
-    $(ReactDOM.findDOMNode(this.refs.field)).typeahead({
-      source: this.props.list,
-      updater: function (item) {
-        this.onSelect(item);
-        return item;
-      }.bind(this)
-    });
-  },
-
-  onChange: function (e) {
-    e.preventDefault();
-    this.props.onChange(e.target.value);
-  },
-
-  onSelect: function (item) {
-    item = item || ReactDOM.findDOMNode(this.refs.field).value;
-    this.props.onChange(item);
-  },
-
-  render: function () {
-    return (
-      <span style={{ position: 'relative' }}>
-        <i className="icon icon-search" style={{ position: 'absolute', right: '10px', top: '-4px', color: '#bbbbbb' }} />
-        <input type="text" ref="field" autoComplete="off" value={this.props.value} placeholder={this.props.placeholder}
-          onChange={this.onChange} style={{ paddingRight: '30px' }} autoFocus={this.props.autoFocus} />
-      </span>
-    );
-  }
-});
-
-
 var MenuDropDown = React.createClass({
 
   getDefaultProps: function () {
@@ -1674,7 +1620,6 @@ export default {
   PaddedBorderedBox: PaddedBorderedBox,
   Document: Document,
   LoadLines: LoadLines,
-  TypeaheadField: TypeaheadField,
   MenuDropDown: MenuDropDown,
   TrayContents: TrayContents,
   TrayWrapper: TrayWrapper,
