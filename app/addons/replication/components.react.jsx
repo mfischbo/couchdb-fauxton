@@ -366,7 +366,7 @@ class ReplicationSource extends React.Component {
       { value: Constants.REPLICATION_SOURCE.LOCAL, label: 'Local database' },
       { value: Constants.REPLICATION_SOURCE.REMOTE, label: 'Remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
@@ -398,7 +398,7 @@ class ReplicationTarget extends React.Component {
       { value: Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, label: 'New local database' },
       { value: Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE, label: 'New remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
