@@ -12,8 +12,7 @@
 
 module.exports = function (grunt) {
   var _ = grunt.util._,
-      fs = require('fs'),
-      os = require('os');
+      fs = require('fs');
 
   grunt.registerMultiTask('template', 'generates an html file from a specified template', function () {
     var data = this.data,
@@ -132,6 +131,7 @@ module.exports = function (grunt) {
 
   // run every time nightwatch is executed from the command line
   grunt.registerMultiTask('initNightwatch', 'Sets up Nightwatch', function () {
+
     // perform a little validation on the settings
     _validateNightwatchSettings(this.data.settings);
 
@@ -140,7 +140,6 @@ module.exports = function (grunt) {
     var result = _getNightwatchTests(this.data.settings);
     var addonsWithTests = result.addonFolders;
     var excludeTests = result.excludeTests;
-    console.log('addons and excluded', addonsWithTests, excludeTests);
 
     // if the user passed a --file="X" on the command line, filter out
     var singleTestToRun = grunt.option('file');
@@ -158,7 +157,7 @@ module.exports = function (grunt) {
       fauxton_username: this.data.settings.nightwatch.fauxton_username,
       password: this.data.settings.nightwatch.password,
       launch_url: this.data.settings.nightwatch.launch_url,
-      fauxton_host: _getHost(this.data.settings.nightwatch.fauxton_ip),
+      fauxton_host: this.data.settings.nightwatch.fauxton_host,
       fauxton_port: this.data.settings.nightwatch.fauxton_port,
       db_host: this.data.settings.nightwatch.db_host,
       db_port: this.data.settings.nightwatch.db_port,
@@ -166,20 +165,8 @@ module.exports = function (grunt) {
     }));
   });
 
-  // HELPERS
 
-  //if FAUXTON_HOST not set use ip address
-  function _getHost (fauxton_ip) {
-    if (fauxton_ip) {
-      return fauxton_ip;
-    }
-    //making some assumptions here
-    const interfaces = os.networkInterfaces();
-    const eth0 = interfaces[Object.keys(interfaces)[1]];
-    return eth0.find(function (item) {
-      return item.family === 'IPv4';
-    }).address;
-  }
+  // HELPERS
 
   function _validateNightwatchSettings (data) {
     var error = '';

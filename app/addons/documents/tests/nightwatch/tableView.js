@@ -28,7 +28,6 @@ module.exports = {
       .checkForDocumentCreated(newDocumentName1)
       .checkForDocumentCreated(newDocumentName2)
       .url(baseUrl + '/#/database/' + newDatabaseName + '/_all_docs?include_docs=true')
-      .waitForElementVisible('.prettyprint', waitTime, false)
 
       .clickWhenVisible('.alternative-header .two-sides-toggle-button button:last-child')
       .waitForElementVisible('.tableview-checkbox-cell', client.globals.maxWaitTime, false)
@@ -60,7 +59,6 @@ module.exports = {
       .checkForDocumentCreated(newDocumentName1)
       .checkForDocumentCreated(newDocumentName2)
       .url(baseUrl + '/#/database/' + newDatabaseName + '/_all_docs')
-      .waitForElementVisible('.prettyprint', waitTime, false)
 
       .clickWhenVisible('.alternative-header .two-sides-toggle-button button:last-child')
       .waitForElementVisible('.tableview-checkbox-cell', client.globals.maxWaitTime, false)

@@ -81,7 +81,7 @@ const ReplicationStore = FauxtonAPI.Store.extend({
     this._databases = databases;
   },
 
-  replicationType: function () {
+  getReplicationType: function () {
     return this._replicationType;
   },
 

@@ -24,7 +24,6 @@ module.exports = {
       .checkForDocumentCreated('outfit1')
       .loginToGUI()
       .url(baseUrl + '/#/database/' + newDatabaseName + '/_all_docs')
-      .waitForElementVisible('.prettyprint', waitTime, false)
 
       .clickWhenVisible('.alternative-header .two-sides-toggle-button button:last-child')
       .waitForElementVisible('.table', waitTime, false)

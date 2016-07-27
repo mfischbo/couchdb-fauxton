@@ -18,7 +18,7 @@ export default {
       const query = '?' + $.param({
         startkey: JSON.stringify(id),
         endkey: JSON.stringify(id + "\u9999"),
-        limit: 30
+        limit: 100
       });
 
       const url = FauxtonAPI.urls('allDocs', 'server', database.safeID(), query);
