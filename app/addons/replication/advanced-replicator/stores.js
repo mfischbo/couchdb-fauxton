@@ -41,7 +41,8 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
         startingSequence: '',
         filterFunction: '',
         queryParameters: '',
-        useCheckpoints: false
+        useCheckpoints: false,
+        checkpointInterval: 0
       }
     };
 

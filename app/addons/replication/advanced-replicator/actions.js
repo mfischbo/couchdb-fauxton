@@ -62,10 +62,94 @@ function updateFilterFunctions (database) {
       FauxtonAPI.addNotification({
         msg: 'Failed to fetch filter functions for database <code>' + database + '</code>',
         type: 'error',
+        escape: false,
         clear: true
       });
   });
 }
+
+/**
+ * Starts the replication
+ */
+function startReplication(job) {
+
+  const request = JSON.stringify(_assembleReplicationRequest(job));
+  const promise = $.ajax({
+    url: '/_replicator',
+    method: 'POST',
+    data: request,
+    contentType: 'application/json',
+    dataType: 'json'
+  }).then(function (result) {
+    FauxtonAPI.addNotification({
+      msg: 'Replication from <code>' + job.source.database + '</code> to <code>' + job.target.database + '</code> started',
+      type: 'success',
+      escape: false,
+      clear: true
+    });
+    }, function (xhr) {
+      FauxtonAPI.addNotification({
+        msg: 'Failed to start the replication.',
+        type: 'error',
+        clear: true
+      });
+  });
+}
+
+/**
+ * Assembles the request body to start a replication.
+ * The function assumes that all required job parameters are set and
+ * checks for optional parameters only.
+ * @param Object containing the parameters for the replication
+ * @return Object that (when represented as JSON) is understood by the CouchDB API
+ */
+function _assembleReplicationRequest (job) {
+  const retval = {};
+  retval.source = job.source.database;
+
+  /*
+   * Option specified on the replication source
+   */
+  if (job.source.proxyUrl !== undefined && job.source.proxyUrl.length > 0) {
+    retval.proxy = job.source.proxyUrl;
+  }
+
+  if (job.source.startingSequence !== undefined && job.source.startingSequence.length > 0) {
+    retval.since_seq = job.source.startingSequence;
+  }
+
+  if (job.source.filter !== undefined && job.source.filter.length > 0) {
+    retval.filter = job.source.filter;
+  }
+
+  if (job.source.queryParameters !== undefined && job.source.queryParameters.length > 0) {
+    retval.query_params = job.source.queryParameters;
+  }
+
+  if (job.source.useCheckpoints) {
+    retval.use_checkpoints = true;
+  }
+
+  if (job.source.checkpointInterval !== undefined && job.source.checkpointInterval.length > 0) {
+    retval.checkpoint_interval = parseInt(job.source.checkpointInterval);
+  }
+
+  /*
+   * Options specified on the replication target
+   */
+  retval.target = job.target.database;
+
+  if (job.target.continuous) {
+    retval.continuous = true;
+  }
+
+  if (job.target.documentId !== undefined && job.target.documentId.length > 0) {
+    retval._id = job.target.documentId;
+  }
+
+  return retval;
+}
+
 
 
 /**
@@ -173,6 +257,9 @@ function setTargetPassword (value) {
   });
 }
 
+/**
+ * Sets advanced options for the source of the replication
+ */
 function setSourceOption (key, value) {
   FauxtonAPI.dispatch({
     type: ActionTypes.REPLICATION_SET_SOURCE_OPTION,
@@ -183,6 +270,9 @@ function setSourceOption (key, value) {
   });
 }
 
+/**
+ * Sets advanced options for the target of the replication
+ */
 function setTargetOption(key, value) {
   FauxtonAPI.dispatch({
     type: ActionTypes.ADV_REPLICATION_SET_TARGET_OPTION,
@@ -192,15 +282,6 @@ function setTargetOption(key, value) {
     }
   });
 }
-
-
-function startReplication () {
-  FauxtonAPI.dispatch({
-    type: ActionTypes.REPLICATION_START_REPLICATION,
-    options: {}
-  });
-}
-
 
 export default {
   getLocalDatabases,

@@ -27,6 +27,33 @@ const StyledSelect = Components.StyledSelect;
 
 export default class AdvancedReplicationController extends React.Component {
 
+  /**
+   * Assembles all required data from the store and triggers the replication action.
+   */
+  onStartReplicationClicked () {
+    const job = {
+      source: {
+        database: store.getSourceDatabase(),
+        password: store.getSourcePassword(),
+        options: {
+          proxyUrl: store.getSourceOption('proxyUrl'),
+          startingSequence: store.getSourceOption('startingSequence'),
+          filter: store.getSourceOption('filterFunction'),
+          queryParameters: store.getSourceOption('queryParameters'),
+          useCheckpoints: store.getSourceOption('useCheckpoints')
+        }
+      },
+      target: {
+        database: store.getTargetDatabase(),
+        password: store.getTargetPassword(),
+        continuous: store.getTargetOption('continuous'),
+        documentId: store.getTargetOption('documentId')
+      }
+    };
+
+    Actions.startReplication(job);
+  }
+
   render() {
     return (
       <div className="advanced-replicator-page">
@@ -45,7 +72,7 @@ export default class AdvancedReplicationController extends React.Component {
           <div className="span3">&nbsp;</div>
           <div className="span6">
             <button className="btn btn-success"
-              onClick={(e) => Actions.startReplication()}>
+              onClick={(e) => this.onStartReplicationClicked()}>
               <i className="icon fonticon-ok-circled"></i> Start Replication
             </button>
           </div>
@@ -205,7 +232,8 @@ class SourcePane extends React.Component {
       startingSequence: store.getSourceOption('startingSequence'),
       filterFunction: store.getSourceOption('filterFunction'),
       queryParameters: store.getSourceOption('queryParameters'),
-      useCheckpoints: store.getSourceOption('useCheckpoints')
+      useCheckpoints: store.getSourceOption('useCheckpoints'),
+      checkpointInterval: store.getSourceOption('checkpointInterval')
     };
   }
 
@@ -313,12 +341,18 @@ class SourcePane extends React.Component {
 
         <div className="row">
           <div className="span3">Use Checkpoints</div>
-          <div className="span4 checkbox-wrapper">
+          <div className="span4">
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                checked={this.state.useCheckpoints === true}
+                data-checked={this.state.useCheckpoints === true}
+                onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints) }/>
+            </div>
             <input
-              type="checkbox"
-              checked={this.state.useCheckpoints === true}
-              data-checked={this.state.useCheckpoints === true}
-              onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints)}/>
+              type="number"
+              value={this.state.checkpointInterval}
+              onChange={(e) => Actions.setSourceOption('checkpointInterval', e.target.value)}/>
           </div>
         </div>
       </div>
