@@ -282,7 +282,7 @@ class ReplicationController extends React.Component {
 
     const params = {};
 
-    // perform a little validatin here
+    // perform a little validating here
     if (!this.validate()) {
       return;
     }
@@ -355,6 +355,25 @@ class ReplicationController extends React.Component {
         clear: true
       });
       return false;
+    }
+    if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE ||
+        replicationTarget === Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE) {
+      let error = '';
+      if (/\s/.test(targetDatabase)) {
+        error = 'The target database may not contain any spaces.';
+      } else if (/^_/.test(targetDatabase)) {
+        error = 'The target database may not start with an underscore.';
+      }
+
+      if (error) {
+        FauxtonAPI.addNotification({
+          msg: error,
+          type: 'error',
+          escape: false,
+          clear: true
+        });
+        return false;
+      }
     }
 
     return true;
@@ -465,8 +484,12 @@ class ReplicationController extends React.Component {
             Replication Document:
           </div>
           <div className="span7">
-            <input type="text" placeholder="Custom ID (optional)" value={replicationDocName}
-              onChange={(e) => Actions.updateFormField('replicationDocName', e.target.value)}/>
+            <div className="custom-id-field">
+              <span className="fonticon fonticon-cancel" title="Clear field"
+                onClick={(e) => Actions.updateFormField('replicationDocName', '')} />
+              <input type="text" placeholder="Custom, new ID (optional)" value={replicationDocName}
+                onChange={(e) => Actions.updateFormField('replicationDocName', e.target.value)}/>
+            </div>
           </div>
         </div>
 
@@ -497,7 +520,7 @@ class ReplicationSource extends React.Component {
       { value: Constants.REPLICATION_SOURCE.LOCAL, label: 'Local database' },
       { value: Constants.REPLICATION_SOURCE.REMOTE, label: 'Remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
@@ -529,7 +552,7 @@ class ReplicationTarget extends React.Component {
       { value: Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE, label: 'New local database' },
       { value: Constants.REPLICATION_TARGET.NEW_REMOTE_DATABASE, label: 'New remote database' }
     ];
-    return _.map(options, function (option) {
+    return options.map((option) => {
       return (
         <option value={option.value} key={option.value}>{option.label}</option>
       );
@@ -611,7 +634,7 @@ class ReplicationTargetRow extends React.Component {
     // new local databases have a freeform text field
     } else if (replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE) {
       field = (
-        <input type="text" placeholder="Database name" value={targetDatabase}
+        <input type="text" className="new-local-db" placeholder="Database name" value={targetDatabase}
           onChange={(e) => Actions.updateFormField('targetDatabase', e.target.value)} />
       );
 

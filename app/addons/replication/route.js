@@ -12,7 +12,6 @@
 
 import app from '../../app';
 import FauxtonAPI from '../../core/api';
-import Replication from './resources';
 import Actions from './actions';
 import Components from './components.react';
 
@@ -38,7 +37,7 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   }
 });
 
-
+var Replication = {};
 Replication.RouteObjects = [ReplicationRouteObject];
 
 export default Replication;

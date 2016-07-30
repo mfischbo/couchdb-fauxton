@@ -36,7 +36,7 @@ function initReplicator (sourceDatabase) {
     url: app.host + '/_all_dbs',
     contentType: 'application/json',
     dataType: 'json'
-  }).then(function (databases) {
+  }).then((databases) => {
     FauxtonAPI.dispatch({
       type: ActionTypes.REPLICATION_DATABASES_LOADED,
       options: {
@@ -47,7 +47,7 @@ function initReplicator (sourceDatabase) {
 }
 
 function replicate (params) {
-  var promise = $.ajax({
+  const promise = $.ajax({
     url: window.location.origin + '/_replicator',
     contentType: 'application/json',
     type: 'POST',
@@ -55,18 +55,18 @@ function replicate (params) {
     data: JSON.stringify(params)
   });
 
-  var source = Helpers.getDatabaseLabel(params.source);
-  var target = Helpers.getDatabaseLabel(params.target);
+  const source = Helpers.getDatabaseLabel(params.source);
+  const target = Helpers.getDatabaseLabel(params.target);
 
-  promise.then(function () {
+  promise.then(() => {
     FauxtonAPI.addNotification({
       msg: 'Replication from <code>' + source + '</code> to <code>' + target + '</code> has begun.',
       type: 'success',
       escape: false,
       clear: true
     });
-  }, function (xhr) {
-    var errorMessage = JSON.parse(xhr.responseText);
+  }, (xhr) => {
+    const errorMessage = JSON.parse(xhr.responseText);
     FauxtonAPI.addNotification({
       msg: errorMessage.reason,
       type: 'error',

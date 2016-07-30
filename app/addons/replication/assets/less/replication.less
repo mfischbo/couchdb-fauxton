@@ -11,6 +11,7 @@
 // the License.
 
 @import "../../../../../assets/less/variables.less";
+@import "../../../../../assets/less/mixins.less";
 
 .replication-page {
   font-size: 14px;
@@ -68,4 +69,26 @@
   font-size: 9pt;
   color: #999999;
   margin-bottom: 8px;
+}
+
+.custom-id-field {
+  position: relative;
+  width: 250px;
+
+  span.fonticon {
+    cursor: pointer;
+    position: absolute;
+    right: 6px;
+    top: 8px;
+    font-size: 11px;
+    padding: 8px;
+    color: #999999;
+    .transition(all 0.25s linear);
+    &:hover {
+      color: #333333;
+    }
+    input {
+      padding-right: 32px;
+    }
+  }
 }
