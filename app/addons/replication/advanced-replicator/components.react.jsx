@@ -47,6 +47,7 @@ export default class AdvancedReplicationController extends React.Component {
         database: store.getTargetDatabase(),
         password: store.getTargetPassword(),
         continuous: store.getTargetOption('continuous'),
+        createTarget: store.getTargetOption('createTarget'),
         documentId: store.getTargetOption('documentId')
       }
     };
@@ -74,6 +75,11 @@ export default class AdvancedReplicationController extends React.Component {
             <button className="btn btn-success"
               onClick={(e) => this.onStartReplicationClicked()}>
               <i className="icon fonticon-ok-circled"></i> Start Replication
+            </button>
+
+            <button className="btn btn-danger"
+              onClick={(e) => Actions.clear() }>
+              <i className="icon icon-delete"></i> Clear
             </button>
           </div>
         </div>
@@ -378,6 +384,7 @@ class TargetPane extends React.Component {
       sourceType: store.getTargetType(),
       localDatabases: store.getLocalDatabases(),
       continuous: store.getTargetOption('continuous'),
+      createTarget: store.getTargetOption('createTarget'),
       documentId: store.getTargetOption('documentId')
     };
   }
@@ -425,6 +432,15 @@ class TargetPane extends React.Component {
         </div>
 
         <div className="row">
+          <div className="span3">Create Target</div>
+          <div className="span7">
+            <input type="checkbox"
+              checked={this.state.createTarget === true}
+              onChange={(e) => Actions.setTargetOption('createTarget', !this.state.createTarget)}/>
+          </div>
+        </div>
+
+        <div className="row">
           <div className="span3">Replication ID</div>
           <div className="span7">
             <input type="text" placeholder="Document ID (optional)"
@@ -435,5 +451,4 @@ class TargetPane extends React.Component {
       </div>
     );
   }
-
 }

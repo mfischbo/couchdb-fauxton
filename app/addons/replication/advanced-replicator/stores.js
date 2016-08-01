@@ -15,10 +15,16 @@ import ActionTypes from './actiontypes';
 
 const AdvancedReplicationStore = FauxtonAPI.Store.extend({
 
-  initialize: function () {
+  /**
+   * Initializes the stores internal data.
+   * @param States if on reinitialization local databases should be kept
+   */
+  initialize: function (keepLocalDatabases) {
 
     // the list of local databases
-    this._databases = [];
+    if (!keepLocalDatabases) {
+      this._databases = [];
+    }
 
     // the list of available filter functions for _sourceDatabase
     // this might be empty if _source.sourceType == 'REMOTE'
@@ -52,6 +58,7 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
       password: '',
       options: {
         continuous: false,
+        createTarget: false,
         documentId: ''
       }
     };
@@ -188,6 +195,11 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.REPLICATION_START_REPLICATION:
         this._startReplication();
+        this.triggerChange();
+        break;
+
+      case ActionTypes.REPLICATION_CLEAR_FORM:
+        this.initialize(true);
         this.triggerChange();
         break;
     }

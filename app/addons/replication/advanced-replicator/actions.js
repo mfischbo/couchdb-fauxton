@@ -87,12 +87,24 @@ function startReplication(job) {
       escape: false,
       clear: true
     });
+    FauxtonAPI.dispatch({
+      type: ActionTypes.REPLICATION_CLEAR_FORM
+    });
     }, function (xhr) {
       FauxtonAPI.addNotification({
         msg: 'Failed to start the replication.',
         type: 'error',
         clear: true
       });
+  });
+}
+
+/**
+ * Sets the store back to an initial state
+ */
+function clear () {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.REPLICATION_CLEAR_FORM
   });
 }
 
@@ -105,7 +117,7 @@ function startReplication(job) {
  */
 function _assembleReplicationRequest (job) {
   const retval = {};
-  retval.source = job.source.database;
+  retval.source = _createUrl(job.source.database);
 
   /*
    * Option specified on the replication source
@@ -137,10 +149,14 @@ function _assembleReplicationRequest (job) {
   /*
    * Options specified on the replication target
    */
-  retval.target = job.target.database;
+  retval.target = _createUrl(job.target.database);
 
   if (job.target.continuous) {
     retval.continuous = true;
+  }
+
+  if (job.target.createTarget) {
+    retval.create_target = true;
   }
 
   if (job.target.documentId !== undefined && job.target.documentId.length > 0) {
@@ -150,6 +166,24 @@ function _assembleReplicationRequest (job) {
   return retval;
 }
 
+
+/**
+ * Ensures that a given string represents a valid URL.
+ * @param database The name of a database (or URL)
+ * @return A valid URL
+ */
+function _createUrl (database) {
+
+  // check if we already have a valid URL
+  if (database.startsWith('http://') || database.startsWith('https://')) {
+    return database;
+  }
+
+  // seems only the name of the database is given.
+  const retval = window.location.protocol + '://' + window.location.hostname
+    + ':' + window.location.port + '/' + database;
+  return retval;
+}
 
 
 /**
@@ -294,5 +328,6 @@ export default {
   setSourceOption,
   setTargetOption,
   updateFilterFunctions,
-  startReplication
+  startReplication,
+  clear
 };
