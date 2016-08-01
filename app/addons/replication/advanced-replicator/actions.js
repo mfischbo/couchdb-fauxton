@@ -55,6 +55,7 @@ function updateFilterFunctions (database) {
     FauxtonAPI.dispatch({
       type: ActionTypes.FILTER_FUNCTIONS_UPDATED,
       options: {
+        database: database,
         filters: filters
       }
     });

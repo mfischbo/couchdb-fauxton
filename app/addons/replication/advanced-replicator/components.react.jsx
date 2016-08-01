@@ -233,7 +233,7 @@ class SourcePane extends React.Component {
   getStoreState () {
     return {
       localDatabases: store.getLocalDatabases(),
-      filterFunctions: store.getAvailableFilterFunctions(),
+      filterFunctions: store.getAvailableFilterFunctions(store.getSourceDatabase()),
       proxyUrl: store.getSourceOption('proxyUrl'),
       startingSequence: store.getSourceOption('startingSequence'),
       filterFunction: store.getSourceOption('filterFunction'),
@@ -255,35 +255,52 @@ class SourcePane extends React.Component {
     store.off('change', this.onStoreChange, this);
   }
 
-  createFilterField() {
-    if (this.state.filterFunctions.length === 0) {
-      return (
-        <StyledSelect
-          selectContent={[]}
-          selectChange={(e) => Actions.setSourceOption('filterFunction', e.target.value)}
-          selectValue=""
-          selectId="replication-filter-select"/>
-      );
-    } else {
-      const options = [
-        { value: '', label: 'Please select' }
-      ];
-      this.state.filterFunctions.map(f => {
-        options.push({ value: f, label: f });
-      });
+  createFilterField () {
+    if (this.state.filterFunctions.length === 0 ||
+      store.getSourceDatabase().length === 0 ||
+      store.getAvailableFilterFunctions(store.getSourceDatabase()) === undefined) {
+      return null;
+    }
 
-      const optionsList = options.map(o => {
-        return (<option value={o.value} key={o.value}>{o.label}</option>);
-      });
+    const options = [
+      { value: '', label: 'Please select' }
+    ];
+    this.state.filterFunctions.map(f => {
+      options.push({ value: f, label: f });
+    });
 
+    const optionsList = options.map(o => {
+      return (<option value={o.value} key={o.value}>{o.label}</option>);
+    });
+
+    return (
+      <div className="row">
+        <div className="span3">Filter</div>
+        <div className="span4">
+          <StyledSelect
+            selectContent={optionsList}
+            selectId="replication-filter-select"
+            selectValue={this.state.filterFunction}
+            selectChange={(e) => Actions.setSourceOption('filterFunction', e.target.value) }/>
+        </div>
+      </div>
+    );
+  }
+
+  createQueryParams () {
+    if (this.state.filterFunction !== undefined && this.state.filterFunction.length > 0) {
       return (
-        <StyledSelect
-          selectContent={optionsList}
-          selectId="replication-filter-select"
-          selectValue={this.state.filterFunction}
-          selectChange={(e) => Actions.setSourceOption('filterFunction', e.target.value) }/>
+        <div className="row">
+          <div className="span3">Query Parameters</div>
+          <div className="span4">
+            <textarea placeholder="Query Parameters (optional)" disabled={this.state.filterFunction === ''}
+              value={this.state.queryParameters}
+              onChange={(e) => Actions.setSourceOption('queryParameters', e.target.value) }/>
+          </div>
+        </div>
       );
     }
+    return null;
   }
 
   createDatabaseRow () {
@@ -305,6 +322,7 @@ class SourcePane extends React.Component {
   render () {
     const filterField = this.createFilterField();
     const databases = this.createDatabaseRow();
+    const queryParams = this.createQueryParams();
 
     return (
       <div>
@@ -329,21 +347,10 @@ class SourcePane extends React.Component {
           </div>
         </div>
 
-        <div className="row">
-          <div className="span3">Filter</div>
-          <div className="span4">
-            {filterField}
-          </div>
-        </div>
 
-        <div className="row">
-          <div className="span3">Query Parameters</div>
-          <div className="span4">
-            <textarea placeholder="Query Parameters (optional)" disabled={this.state.filterFunction === ''}
-              value={this.state.queryParameters}
-              onChange={(e) => Actions.setSourceOption('queryParameters', e.target.value) }/>
-          </div>
-        </div>
+        {filterField}
+
+        {queryParams}
 
         <div className="row">
           <div className="span3">Use Checkpoints</div>

@@ -26,9 +26,9 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
       this._databases = [];
     }
 
-    // the list of available filter functions for _sourceDatabase
-    // this might be empty if _source.sourceType == 'REMOTE'
-    this._filterFunctions = [];
+    // object containing a mapping from local database names
+    // to defined filterfunctions for those databases
+    this._filterFunctions = {};
 
     // the selected filter function to be used
     this._filterFunction = '';
@@ -68,12 +68,12 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
     return this._databases;
   },
 
-  getAvailableFilterFunctions: function () {
-    return this._filterFunctions;
+  getAvailableFilterFunctions: function (database) {
+    return this._filterFunctions[database] || [];
   },
 
-  setAvailableFilterFunctions: function (filterFunctions) {
-    this._filterFunctions = filterFunctions;
+  setAvailableFilterFunctions: function (database, filterFunctions) {
+    this._filterFunctions[database] = filterFunctions;
   },
 
   getSourceType: function () {
@@ -149,7 +149,8 @@ const AdvancedReplicationStore = FauxtonAPI.Store.extend({
         break;
 
       case ActionTypes.FILTER_FUNCTIONS_UPDATED:
-        this._filterFunctions = action.options.filters;
+        this.setAvailableFilterFunctions(action.options.database,
+          action.options.filters);
         this.triggerChange();
         break;
 
