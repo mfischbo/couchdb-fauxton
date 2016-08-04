@@ -14,78 +14,63 @@ import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
-function updateFormField (field, value) {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_UPDATE_FORM_FIELD,
-        options: {
-            field: field,
-            value: value
-        }
-    });
+/**
+ * Sets the bookmark that is currently subject of being edited
+ * @param The bookmark to be edited
+ */
+function focusBookmark (bookmark) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_FOCUS_BOOKMARK,
+    options: {
+      bookmark: bookmark
+    }
+  });
 }
 
-function resetForm () {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_RESET_FORM
-    });
-}
-
-function pushDatabase () {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_PUSH_DATABASE
-    });
-}
-
-function editDatabase (database) {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_EDIT_DATABASE,
-        options: {
-            database: database
-        }
-    });
-}
-
-function removeDatabase (database) {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_REMOVE_DATABASE,
-        options: {
-            database: database
-        }
-    });
-}
-
-function editBookmark (bookmark) {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_EDIT_BOOKMARK,
-        options: {
-            bookmark: bookmark
-        }
-    });
-}
-
+/**
+ * Deletes the bookmark from the map of available bookmarks
+ * @param The bookmark to be deleted
+ */
 function deleteBookmark (bookmark) {
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_DELETE_BOOKMARK,
-        options: {
-            bookmark: bookmark
-        }
-    });
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_DELETE_BOOKMARK,
+    options: {
+      bookmark: bookmark
+    }
+  });
 }
 
-function saveBookmark () {
-    // TODO: Fire an API request and store the bookmark in the users object
-    FauxtonAPI.dispatch({
-        type: ActionTypes.BOOKMARK_SAVE_BOOKMARK
-    });
+/**
+ * Saves the bookmark in a repository and triggers an update on the store
+ * @param The bookmark to be stored
+ */
+function saveBookmark(bookmark) {
+  // TODO: Save the bookmark in PouchDB or localstorage or where eva
+  bookmark.id = _uuid();
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_SAVE_BOOKMARK,
+    options: {
+      bookmark: bookmark
+    }
+  });
+  return true;
+}
+
+/**
+ * TODO: Remove this. Only used temporaryly
+ */
+function _uuid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
 }
 
 export default {
-    updateFormField,
-    resetForm,
-    pushDatabase,
-    editDatabase,
-    removeDatabase,
-    editBookmark,
+    focusBookmark,
     deleteBookmark,
     saveBookmark
 };

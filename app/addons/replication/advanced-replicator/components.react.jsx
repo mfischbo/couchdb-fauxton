@@ -361,11 +361,12 @@ class SourcePane extends React.Component {
                 checked={this.state.useCheckpoints === true}
                 data-checked={this.state.useCheckpoints === true}
                 onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints) }/>
+
+              <input
+                type="number"
+                value={this.state.checkpointInterval}
+                onChange={(e) => Actions.setSourceOption('checkpointInterval', e.target.value)}/>
             </div>
-            <input
-              type="number"
-              value={this.state.checkpointInterval}
-              onChange={(e) => Actions.setSourceOption('checkpointInterval', e.target.value)}/>
           </div>
         </div>
       </div>

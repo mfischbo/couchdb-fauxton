@@ -14,149 +14,90 @@ import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
 const BookmarkStore = FauxtonAPI.Store.extend({
-    initialize: function () {
-        this.resetForm();
-
-        // array containing the users bookmarks
-        this._bookmarks = [];
-    },
-
-    resetForm: function () {
-        // the object containing the forms values
-        this._focusedBookmark = {
-            id: 0,
-            name: '',
-            host: '',
-            databases: []
-        };
-
-        this._focusedDatabase = {
-            id: '',
-            username: '',
-            database: ''
-        };
-    },
+  initialize: function () {
+    /*
+     * A map to hold all bookmarks. Key is the id of the bookmark
+     * value is the bookmark itself
+     */
+    this._bookmarks = {};
 
     /**
-     * Returns the currently focues bookmark
+     * The bookmark that is currently subject to be edited
      */
-    getFocusedBookmark () {
-        return this._focusedBookmark;
-    },
+    this._focusedBookmark = {};
+  },
 
-    getFocusedDatabase () {
-        return this._focusedDatabase;
-    },
+  /**
+   * Returns the currently focues bookmark
+   */
+  getFocusedBookmark () {
+    return this._focusedBookmark;
+  },
 
-    getBookmarks () {
-        return this._bookmarks;
-    },
+  /**
+   * Sets the bookmark that is currently subject to be edited
+   * @param The bookmark to be edited
+   */
+  setFocusedBookmark (bookmark) {
+    this._focusedBookmark = bookmark;
+  },
 
-    setBookmarks (bookmarks) {
-        this._bookmarks = bookmarks;
-    },
+  /**
+   * Returns a map of stored bookmarks.
+   * Key is the id of the bookmark, value is the bookmark itself
+   * @return The bookmarks that are available
+   */
+  getBookmarks () {
+    return this._bookmarks;
+  },
 
-    _pushDatabase () {
-        if (this._focusedDatabase.id !== '') {
-            for (let i in this._focusedBookmark.databases) {
-                if (this._focusedBookmark.databases[i].id == this._focusedDatabase.id) {
-                    this._focusedBookmark.databases[i] = this._focusedDatabase;
-                }
-            }
-        } else {
-            this._focusedDatabase.id = this._focusedBookmark.databases.length + 1;
-            this._focusedBookmark.databases.push(this._focusedDatabase);
-        }
-        this._focusedDatabase = {
-            id: '',
-            username: '',
-            database: ''
-        };
-        this.triggerChange();
-    },
+  /**
+   * Sets the bookmarks that are available. This must be a map
+   * of key value pairs. Key is the id of the bookmark,
+   * value is the bookmark itself.
+   * @param The bookmarks
+   */
+  setBookmarks (bookmarks) {
+    this._bookmarks = bookmarks;
+  },
 
-    _editDatabase (database) {
-        this._focusedDatabase = database;
-        this.triggerChange();
-    },
-
-    _removeDatabase (database) {
-        const idx = this._focusedBookmark.databases.indexOf(database);
-        this._focusedBookmark.databases.splice(idx, 1);
-        this.triggerChange();
-    },
-
-    _editBookmark (bookmark) {
-        // TODO: Implmeent check if the form has been edited and ask
-        // the user for permission to reset the form
-        this._focusedBookmark = bookmark;
-        this.triggerChange();
-    },
-
-    _deleteBookmark (bookmark) {
-        // TODO: Let the user confirm the action
-        const idx = this._bookmarks.indexOf(bookmark);
-        if (idx > -1) {
-            this._bookmarks.splice(idx, 1);
-        }
-        this.triggerChange();
-    },
-
-    _saveBookmark () {
-        const bookmark = {
-            id : this._bookmarks.length + 1,
-            name: this._focusedBookmark.name,
-            host: this._focusedBookmark.host,
-            databases: this._focusedBookmark.databases
-        };
-
-        this._bookmarks.push(bookmark);
-        this.resetForm();
-        this.triggerChange();
-    },
-
-    dispatch: function (action) {
-
-        switch (action.type) {
-            case ActionTypes.BOOKMARK_UPDATE_FORM_FIELD:
-                if (action.options.field === 'username' || action.options.field === 'database') {
-                    this._focusedDatabase[action.options.field] = action.options.value;
-                } else {
-                    this._focusedBookmark[action.options.field] = action.options.value;
-                }
-                this.triggerChange();
-                break;
-
-            case ActionTypes.BOOKMARK_RESET_FORM:
-                this.resetForm();
-                this.triggerChange();
-                break;
-
-            case ActionTypes.BOOKMARK_PUSH_DATABASE:
-                this._pushDatabase();
-                break;
-
-            case ActionTypes.BOOKMARK_EDIT_DATABASE:
-                this._editDatabase(action.options.database);
-                break;
-
-            case ActionTypes.BOOKMARK_REMOVE_DATABASE:
-                this._removeDatabase(action.options.database);
-                break;
-
-            case ActionTypes.BOOKMARK_SAVE_BOOKMARK:
-                this._saveBookmark();
-                break;
-
-            case ActionTypes.BOOKMARK_EDIT_BOOKMARK:
-                this._editBookmark(action.options.bookmark);
-                break;
-
-            case ActionTypes.BOOKMARK_DELETE_BOOKMARK:
-                this._deleteBookmark(action.options.bookmark);
-                break;
-        }
+  /**
+   * Removes the bookmark from the internal map of stored bookmarks
+   * @param The bookmark to be removed
+   */
+  _deleteBookmark(bookmark) {
+    if (this._focusedBookmark === bookmark) {
+      this.setFocusedBookmark({});
     }
+    delete this._bookmarks[bookmark.id];
+  },
+
+  /**
+   * Stores the bookmark internally
+   * @param The bookmark to be stored.
+   */
+  _saveBookmark (bookmark) {
+    this._bookmarks[bookmark.id] = bookmark;
+  },
+
+  dispatch: function (action) {
+    switch (action.type) {
+      case ActionTypes.BOOKMARK_SAVE_BOOKMARK:
+        this._saveBookmark(action.options.bookmark);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.BOOKMARK_FOCUS_BOOKMARK:
+        this.setFocusedBookmark(action.options.bookmark);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.BOOKMARK_DELETE_BOOKMARK:
+        this._deleteBookmark(action.options.bookmark);
+        this.triggerChange();
+        break;
+    }
+  }
 });
 
 const bookmarkStore = new BookmarkStore();

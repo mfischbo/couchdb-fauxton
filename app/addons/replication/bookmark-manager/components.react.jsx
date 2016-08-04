@@ -19,217 +19,192 @@ const store = Stores.bookmarkStore;
 
 export default class BookmarksController extends React.Component {
 
-    constructor () {
-        super();
-    }
+  constructor () {
+    super();
+    this.state = this.getStoreState();
+  }
 
-    componentWillMount () {
+  getStoreState() {
+    return {
+      focusedBookmark: store.getFocusedBookmark()
+    };
+  }
 
-    }
+  componentDidMount() {
+    store.on('change', this.onStoreChange, this);
+  }
 
-    componentDidMount () {
-    }
+  componentWillUnmount () {
+    store.off('change', this.onStoreChange, this);
+  }
 
-    componentWillUnmount () {
+  onStoreChange () {
+    this.setState(this.getStoreState());
+  }
 
-    }
-
-    render () {
-        return (
-            <div className="bookmarks-page">
-                <BookmarkForm/>
-                <BookmarkTable />
-            </div>
-        );
-    }
+  render() {
+    return (
+      <div className="bookmarks-page">
+        <BookmarkForm
+          bookmark={this.state.focusedBookmark}/>
+        <BookmarkTable />
+      </div>
+    );
+  }
 }
 
 
+/**
+ * This class represents the form which enables the user to
+ * create new bookmarks and enables the user to edit stored bookmarks.
+ */
 class BookmarkForm extends React.Component {
 
-    constructor () {
-        super();
-        this.state = this.getStoreState();
+    constructor (props) {
+      super(props);
+      this.state = this.getLocalState(props);
+      this.saveBookmark = this.saveBookmark.bind(this);
     }
 
-    getStoreState () {
-        return {
-            bookmark: store.getFocusedBookmark(),
-            database: store.getFocusedDatabase()
-        };
+    getLocalState(props) {
+      return {
+        id: props.bookmark.id || '',
+        host: props.bookmark.host || '',
+        user: props.bookmark.user || '',
+        database: props.bookmark.database || ''
+      };
     }
 
-    componentWillMount () {
-        store.on('change', this.onStoreChange, this);
+    componentWillReceiveProps(props) {
+      this.setState(this.getLocalState(props));
     }
 
-    componentWillUnmount () {
-        store.off('change', this.onStoreChange, this);
+    onInputChange (key, value) {
+      const s = this.state;
+      s[key] = value;
+      this.setState(s);
     }
 
-    onStoreChange () {
-        this.setState(this.getStoreState());
-    }
-
-    createDatabaseEntries () {
-        if (this.state.bookmark.databases.length == 0) {
-            return (
-                <tr>
-                    <td colSpan="3">
-                        <span>No databases available</span>
-                    </td>
-                </tr>
-            );
-        }
-
-        return this.state.bookmark.databases.map(db => {
-            return (
-                <tr key={db.id}>
-                    <td>{db.username}</td>
-                    <td>{db.database}</td>
-                    <td className="actions">
-                        <button className="btn icon-pencil"
-                            onClick={(e) => Actions.editDatabase(db)}>
-                        </button>
-                        <button className="btn icon-trash"
-                            onClick={(e) => Actions.removeDatabase(db)}>
-                        </button>
-                    </td>
-                </tr>
-            );
-        });
+    saveBookmark () {
+      const success = Actions.saveBookmark(this.state);
+      if (success) {
+        this.setState(this.getLocalState({ bookmark: {}}));
+      }
     }
 
     render () {
-        const dbEntries = this.createDatabaseEntries();
+      return (
+        <div className="row-fluid">
+          <div className="span3">
+            <label>Remote Host</label>
+            <input type="text" value={this.state.host} onChange={(e) => this.onInputChange('host', e.target.value) }/>
+          </div>
 
-        return (
-            <div className="bookmarks-form">
-                <h5>Add a bookmark</h5>
-                <div className="row-fluid">
-                    <div className="span4">
-                        <label>Bookmark Name</label>
-                        <input type="text" onChange={(event) => Actions.updateFormField('name', event.target.value)}
-                            value={this.state.bookmark.name} className="form-input" />
+          <div className="span3">
+            <label>Username</label>
+            <input type="text" value={this.state.user} onChange={(e) => this.onInputChange('user', e.target.value) }/>
+          </div>
 
-                        <label>Host URL</label>
-                        <input type="text" onChange={(event) => Actions.updateFormField('host', event.target.value)}
-                            value={this.state.bookmark.host} className="form-input"/>
-                    </div>
+          <div className="span3">
+            <label>Database</label>
+            <input type="text" value={this.state.database} onChange={(e) => this.onInputChange('database', e.target.value) }/>
+          </div>
 
-                    <div className="span4">
-                        <label>Username</label>
-                        <input type="text" onChange={(event) => Actions.updateFormField('username', event.target.value)}
-                             value={this.state.database.username} className="form-input"/>
-
-                        <label>Database</label>
-                        <form className="form-inline">
-                            <input type="text" onChange={(event) => Actions.updateFormField('database', event.target.value)}
-                                value={this.state.database.database} className="form-input"/>
-
-                            <button type="button" className="btn btn-success"
-                                onClick={(event) => Actions.pushDatabase()}>Add</button>
-                        </form>
-                    </div>
-
-                    <div className="span4">
-                        <table className="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Database</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dbEntries}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div className="row-fluid">
-                    <div className="span12">
-                        <div className="pull-right">
-                            <button type="button" className="btn btn-danger"
-                                onClick={(e) => Actions.resetForm()}>Cancel</button>
-                            <button type="button" className="btn btn-success"
-                                onClick={(e) => Actions.saveBookmark()}>Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+          <div className="span3">
+            <label>&nbsp;</label>
+            <button type="button" className="btn btn-success"
+              onClick={this.saveBookmark}>
+              <i className="icon icon-ok"></i> Save
+            </button>
+          </div>
+        </div>
+      );
     }
 }
 
+/**
+ * Class that represents the table to display all bookmarks that have
+ * been stored by a user.
+ */
 class BookmarkTable extends React.Component {
 
-    constructor () {
-        super();
-        this.state = this.getStoreState();
+  constructor () {
+    super();
+    this.state = this.getStoreState();
+  }
+
+  getStoreState () {
+    return {
+      bookmarks: store.getBookmarks()
+    };
+  }
+
+  componentWillMount () {
+    store.on('change', this.onStoreChange, this);
+  }
+
+  componentWillUnmount () {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange () {
+    this.setState(this.getStoreState());
+  }
+
+  createTableEntries () {
+    const bookmarks = this.state.bookmarks;
+    if (Object.keys(bookmarks).length == 0) {
+      return (
+        <tr>
+          <td colSpan="5">No bookmarks available</td>
+        </tr>
+      );
     }
 
-    getStoreState () {
-        return {
-            bookmarks: store.getBookmarks()
-        };
-    }
 
-    componentWillMount () {
-        store.on('change', this.onStoreChange, this);
-    }
-
-    componentWillUnmount () {
-        store.off('change', this.onStoreChange, this);
-    }
-
-    onStoreChange () {
-        this.setState(this.getStoreState());
-    }
-
-    createTableEntries () {
-        if (this.state.bookmarks.length == 0) {
-            return (
-                <tr>
-                    <td colSpan="3">No bookmarks available</td>
-                </tr>
-            );
-        }
+    return (
+      Object.keys(bookmarks).map(id => {
         return (
-           this.state.bookmarks.map(bm => {
-                return (
-                    <tr key={bm.id}>
-                        <td>{bm.name}</td>
-                        <td>{bm.host}</td>
-                        <td className="actions">
-                            <button className="btn icon-pencil"
-                                onClick={(e) => Actions.editBookmark(bm)}></button>
-                            <button className="btn icon-trash"
-                                onClick={(e) => Actions.deleteBookmark(bm)}></button>
-                        </td>
-                    </tr>
-                );
-            })
+          <tr key={id}>
+            <td>
+              <input type="checkbox"/>
+            </td>
+            <td>{bookmarks[id].database}</td>
+            <td>{bookmarks[id].host}</td>
+            <td>{bookmarks[id].user}</td>
+            <td className="actions">
+              <button className="btn icon-pencil"
+                onClick={(e) => Actions.focusBookmark(bookmarks[id]) }>
+              </button>
+              <button className="btn icon-trash"
+                onClick={(e) => Actions.deleteBookmark(bookmarks[id]) }>
+              </button>
+            </td>
+          </tr>
         );
-    }
+      })
+    );
+  }
 
-    render () {
-        const entries = this.createTableEntries();
-        return (
-            <div className="bookmarks-table">
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Host</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {entries}
-                    </tbody>
-                </table>
-            </div>
-        );
-    }
+  render () {
+    const entries = this.createTableEntries();
+    return (
+      <div className="bookmarks-table">
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Database</th>
+              <th>Remote Server URL</th>
+              <th>Remote User</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 }
