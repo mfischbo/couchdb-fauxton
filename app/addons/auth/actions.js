@@ -31,14 +31,13 @@ var errorHandler = function (xhr, type, msg) {
 function login (username, password, urlBack) {
   var promise = FauxtonAPI.session.login(username, password);
 
-  promise.then(function () {
+  promise.then(() => {
     FauxtonAPI.addNotification({ msg: FauxtonAPI.session.messages.loggedIn });
     if (urlBack) {
       return FauxtonAPI.navigate(urlBack);
     }
     FauxtonAPI.navigate('/');
-  });
-  promise.fail(errorHandler);
+  }, errorHandler);
 }
 
 function changePassword (password, passwordConfirm) {
@@ -48,9 +47,7 @@ function changePassword (password, passwordConfirm) {
   promise.then(() => {
     FauxtonAPI.addNotification({ msg: FauxtonAPI.session.messages.changePassword });
     FauxtonAPI.dispatch({ type: ActionTypes.AUTH_CLEAR_CHANGE_PWD_FIELDS });
-  });
-
-  promise.fail(errorHandler);
+  }, errorHandler);
 }
 
 function updateChangePasswordField (value) {

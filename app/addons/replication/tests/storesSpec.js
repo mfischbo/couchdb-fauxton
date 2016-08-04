@@ -13,8 +13,8 @@ import utils from '../../../../test/mocha/testUtils';
 import Stores from '../stores';
 import Constants from '../constants';
 
-var assert = utils.assert;
-var store = Stores.replicationStore;
+const assert = utils.assert;
+const store = Stores.replicationStore;
 
 describe('Databases Store', function () {
 

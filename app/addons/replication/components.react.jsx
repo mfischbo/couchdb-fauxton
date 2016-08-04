@@ -84,7 +84,7 @@ class ReplicationController extends React.Component {
   showPasswordModal () {
     const { replicationSource, replicationTarget } = this.state;
 
-    var hasLocalSourceOrTarget = (replicationSource === Constants.REPLICATION_SOURCE.LOCAL ||
+    const hasLocalSourceOrTarget = (replicationSource === Constants.REPLICATION_SOURCE.LOCAL ||
       replicationTarget === Constants.REPLICATION_TARGET.EXISTING_LOCAL_DATABASE ||
       replicationTarget === Constants.REPLICATION_TARGET.NEW_LOCAL_DATABASE);
 
