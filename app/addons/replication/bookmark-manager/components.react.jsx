@@ -13,6 +13,7 @@
 import React from 'react';
 import Stores from './stores';
 import Actions from './actions';
+import FauxtonAPI from '../../../core/api';
 import './assets/less/bookmark-manager.less';
 
 const store = Stores.bookmarkStore;
@@ -49,6 +50,7 @@ export default class BookmarksController extends React.Component {
         <BookmarkForm
           bookmark={this.state.focusedBookmark}/>
         <BookmarkTable />
+        <BookmarkPagination/>
       </div>
     );
   }
@@ -141,7 +143,7 @@ class SortingTableHead extends React.Component {
     const icon = this.getSortingIcon();
     return (
       <th className="sortable" onClick={this.props.callback}>
-        {this.props.property}
+        {this.props.children}
         &nbsp;
         {icon}
       </th>
@@ -168,7 +170,8 @@ class BookmarkTable extends React.Component {
 
   getStoreState () {
     return {
-      bookmarks: store.getBookmarks()
+      bookmarks: store.getBookmarks(),
+      page: store.getPage()
     };
   }
 
@@ -203,7 +206,7 @@ class BookmarkTable extends React.Component {
     return bookmarks;
   }
 
-  createTableEntries () {
+  createTableEntries() {
     if (Object.keys(this.state.bookmarks).length == 0) {
       return (
         <tr>
@@ -212,7 +215,11 @@ class BookmarkTable extends React.Component {
       );
     }
 
-    const bookmarks = this.getPreparedModel();
+    // calculate the current page offsets
+    const start = this.state.page.currentPage * FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
+    const len = start + FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
+
+    const bookmarks = this.getPreparedModel().slice(start, len);
 
     return (
       bookmarks.map(bm => {
@@ -238,15 +245,14 @@ class BookmarkTable extends React.Component {
     );
   }
 
-  onSortingChange(property) {
-    console.log('Changing sorting');
-   this.sorting.property = property;
-   if (this.sorting.direction === 'ASC') {
-     this.sorting.direction = 'DESC';
-   } else {
-     this.sorting.direction = 'ASC';
-   }
-   this.forceUpdate();
+  onSortingChange (property) {
+    this.sorting.property = property;
+    if (this.sorting.direction === 'ASC') {
+      this.sorting.direction = 'DESC';
+    } else {
+      this.sorting.direction = 'ASC';
+    }
+    this.forceUpdate();
   }
 
 
@@ -272,6 +278,48 @@ class BookmarkTable extends React.Component {
           </tbody>
         </table>
       </div>
+    );
+  }
+}
+
+class BookmarkPagination extends React.Component {
+
+  constructor() {
+    super();
+    this.state = this.getStoreState();
+  }
+
+  getStoreState() {
+    return {
+      page: store.getPage(),
+      bookmarks: store.getBookmarks()
+    };
+  }
+
+  componentDidMount() {
+    store.on('change', this.onChange, this);
+  }
+
+  componentWillUnmount() {
+    store.off('change', this.onChange, this);
+  }
+
+  onChange() {
+    this.setState(this.getStoreState());
+  }
+
+  render() {
+    return (
+      <footer className="">
+        <button onClick={(e) => Actions.previousPage(this.state.bookmarks, this.state.page)}>
+          PREV
+        </button>
+          Showing some bookmarks
+        <button onClick={(e) => Actions.nextPage(this.state.bookmarks, this.state.page)}>
+          NEXT
+        </button>
+
+      </footer>
     );
   }
 }

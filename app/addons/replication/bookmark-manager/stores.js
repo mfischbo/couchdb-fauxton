@@ -25,6 +25,16 @@ const BookmarkStore = FauxtonAPI.Store.extend({
      * The bookmark that is currently subject to be edited
      */
     this._focusedBookmark = {};
+
+    /**
+     * Contains information about pagination
+     */
+    this._page = {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      numberOfPages: 1,
+      currentPage: 0
+    };
   },
 
   /**
@@ -62,6 +72,23 @@ const BookmarkStore = FauxtonAPI.Store.extend({
   },
 
   /**
+   * Returns the meta information of the current page
+   * @return The page
+   */
+  getPage () {
+    return this._page;
+  },
+
+  /**
+   * Sets the meta information for the current page
+   * @param Page the new page to be used
+   */
+  setPage(page) {
+    console.log(page);
+    this._page = page;
+  },
+
+  /**
    * Removes the bookmark from the internal map of stored bookmarks
    * @param The bookmark to be removed
    */
@@ -85,6 +112,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.BOOKMARK_INIT:
         this.setBookmarks(action.options.bookmarks);
+        this.setPage(action.options.page);
         this.triggerChange();
         break;
 
@@ -100,6 +128,11 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.BOOKMARK_DELETE_BOOKMARK:
         this._deleteBookmark(action.options.bookmark);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.BOOKMARK_PAGE_UPDATE:
+        this.setPage(action.options.page);
         this.triggerChange();
         break;
     }
