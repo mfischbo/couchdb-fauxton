@@ -14,6 +14,20 @@ import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
+
+function initialize() {
+  let bookmarks = {};
+  if (localStorage.getItem('__bookmarks')) {
+    bookmarks = JSON.parse(localStorage.getItem('__bookmarks'));
+  }
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_INIT,
+    options: {
+      bookmarks: bookmarks
+    }
+  });
+}
+
 /**
  * Sets the bookmark that is currently subject of being edited
  * @param The bookmark to be edited
@@ -45,8 +59,16 @@ function deleteBookmark (bookmark) {
  * @param The bookmark to be stored
  */
 function saveBookmark(bookmark) {
-  // TODO: Save the bookmark in PouchDB or localstorage or where eva
   bookmark.id = _uuid();
+
+  // For now we use local storage and switch to couchdb later on
+  let bookmarks = {};
+  if (localStorage.getItem('__bookmarks')) {
+     bookmarks = JSON.parse(localStorage.getItem('__bookmarks'));
+  }
+  bookmarks[bookmark.id] = bookmark;
+  localStorage.setItem('__bookmarks', JSON.stringify(bookmarks));
+
   FauxtonAPI.dispatch({
     type: ActionTypes.BOOKMARK_SAVE_BOOKMARK,
     options: {
@@ -70,7 +92,8 @@ function _uuid() {
 }
 
 export default {
-    focusBookmark,
-    deleteBookmark,
-    saveBookmark
+  initialize,
+  focusBookmark,
+  deleteBookmark,
+  saveBookmark
 };

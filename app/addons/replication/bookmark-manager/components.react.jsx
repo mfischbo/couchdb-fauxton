@@ -22,6 +22,7 @@ export default class BookmarksController extends React.Component {
   constructor () {
     super();
     this.state = this.getStoreState();
+    Actions.initialize();
   }
 
   getStoreState() {
@@ -122,6 +123,33 @@ class BookmarkForm extends React.Component {
     }
 }
 
+class SortingTableHead extends React.Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  getSortingIcon() {
+     if (this.props.sorting.property === this.props.property) {
+      const clazz = this.props.sorting.direction === 'ASC' ? 'icon icon-caret-up' : 'icon icon-caret-down';
+      return (<i className={clazz}></i>);
+    }
+    return null;
+  }
+
+  render() {
+    const icon = this.getSortingIcon();
+    return (
+      <th className="sortable" onClick={this.props.callback}>
+        {this.props.property}
+        &nbsp;
+        {icon}
+      </th>
+    );
+  }
+}
+
+
 /**
  * Class that represents the table to display all bookmarks that have
  * been stored by a user.
@@ -131,6 +159,11 @@ class BookmarkTable extends React.Component {
   constructor () {
     super();
     this.state = this.getStoreState();
+
+    this.sorting = {
+      property: 'database',
+      direction: 'ASC'
+    };
   }
 
   getStoreState () {
@@ -151,9 +184,27 @@ class BookmarkTable extends React.Component {
     this.setState(this.getStoreState());
   }
 
+  getPreparedModel () {
+    const bookmarks = [];
+    Object.keys(this.state.bookmarks).map(id => {
+
+      // TODO: This is also a nice spot for a filter ;)
+      bookmarks.push(this.state.bookmarks[id]);
+    });
+
+    // apply sorting
+    const that = this;
+    bookmarks.sort(function (left, right) {
+      return left[that.sorting.property] > right[that.sorting.property];
+    });
+    if (this.sorting.direction === 'DESC') {
+      bookmarks.reverse();
+    }
+    return bookmarks;
+  }
+
   createTableEntries () {
-    const bookmarks = this.state.bookmarks;
-    if (Object.keys(bookmarks).length == 0) {
+    if (Object.keys(this.state.bookmarks).length == 0) {
       return (
         <tr>
           <td colSpan="5">No bookmarks available</td>
@@ -161,23 +212,24 @@ class BookmarkTable extends React.Component {
       );
     }
 
+    const bookmarks = this.getPreparedModel();
 
     return (
-      Object.keys(bookmarks).map(id => {
+      bookmarks.map(bm => {
         return (
-          <tr key={id}>
+          <tr key={bm.id}>
             <td>
               <input type="checkbox"/>
             </td>
-            <td>{bookmarks[id].database}</td>
-            <td>{bookmarks[id].host}</td>
-            <td>{bookmarks[id].user}</td>
+            <td>{bm.database}</td>
+            <td>{bm.host}</td>
+            <td>{bm.user}</td>
             <td className="actions">
               <button className="btn icon-pencil"
-                onClick={(e) => Actions.focusBookmark(bookmarks[id]) }>
+                onClick={(e) => Actions.focusBookmark(bm) }>
               </button>
               <button className="btn icon-trash"
-                onClick={(e) => Actions.deleteBookmark(bookmarks[id]) }>
+                onClick={(e) => Actions.deleteBookmark(bm) }>
               </button>
             </td>
           </tr>
@@ -186,6 +238,18 @@ class BookmarkTable extends React.Component {
     );
   }
 
+  onSortingChange(property) {
+    console.log('Changing sorting');
+   this.sorting.property = property;
+   if (this.sorting.direction === 'ASC') {
+     this.sorting.direction = 'DESC';
+   } else {
+     this.sorting.direction = 'ASC';
+   }
+   this.forceUpdate();
+  }
+
+
   render () {
     const entries = this.createTableEntries();
     return (
@@ -193,10 +257,13 @@ class BookmarkTable extends React.Component {
         <table className="table table-striped">
           <thead>
             <tr>
-              <th></th>
-              <th>Database</th>
-              <th>Remote Server URL</th>
-              <th>Remote User</th>
+              <th className="checkbox"></th>
+              <SortingTableHead callback={() => this.onSortingChange('database')}
+                property="database" sorting={this.sorting}>Database</SortingTableHead>
+              <SortingTableHead callback={() => this.onSortingChange('host') }
+                property="host"  sorting={this.sorting}>Remote URL</SortingTableHead>
+              <SortingTableHead callback={() => this.onSortingChange('username') }
+                property="username" sorting={this.sorting}>Remote User</SortingTableHead>
               <th>Actions</th>
             </tr>
           </thead>

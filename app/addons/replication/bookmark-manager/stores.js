@@ -82,6 +82,12 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
   dispatch: function (action) {
     switch (action.type) {
+
+      case ActionTypes.BOOKMARK_INIT:
+        this.setBookmarks(action.options.bookmarks);
+        this.triggerChange();
+        break;
+
       case ActionTypes.BOOKMARK_SAVE_BOOKMARK:
         this._saveBookmark(action.options.bookmark);
         this.triggerChange();
