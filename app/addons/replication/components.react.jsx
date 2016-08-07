@@ -337,12 +337,13 @@ class ReplicationSourceRow extends React.Component {
 
     if (replicationSource === Constants.REPLICATION_SOURCE.LOCAL) {
       return (
-        <div className="row">
+        <div className="replication-source-name-row row">
           <div className="span3">
             Source Name:
           </div>
           <div className="span7">
             <ReactSelect
+              name="source-name"
               value={sourceDatabase}
               placeholder="Database name"
               options={Helpers.getReactSelectOptions(databases)}
@@ -519,7 +520,7 @@ class ReplicationTargetRow extends React.Component {
     }
 
     return (
-      <div className="row">
+      <div className="replication-target-name-row row">
         <div className="span3">{targetLabel}</div>
         <div className="span7">
           {field}
