@@ -67,8 +67,6 @@ module.exports = {
       .setValue('.enter-password-modal input[type="password"]', pwd) // pull pwd from somewhere?
       .click('.enter-password-modal button.save')
 
-      .waitForElementPresent('.global-notification.alert-success', waitTime, true)
-
       // now check the database was created
       .checkForDatabaseCreated(newDatabaseName1, waitTime, true)
 
