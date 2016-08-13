@@ -240,7 +240,20 @@ class BookmarkTable extends React.Component {
         return (
           <tr key={bm.id}>
             <td>
-              <input type="checkbox" checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}/>
+              <div className="custom-inputs show-select">
+              <div className="checkbox inline">
+                <input
+                  id={bm.id}
+                  checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
+                  data-checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
+                  onChange={(e) => this.onSelected(bm.id)}
+                  type="checkbox"
+                  className="js-row-select"/>
+                <label
+                  className="label-checkbox-doclist"
+                  htmlFor={bm.id}/>
+              </div>
+                </div>
             </td>
             <td>{bm.database}</td>
             <td>{bm.host}</td>
@@ -267,6 +280,16 @@ class BookmarkTable extends React.Component {
       this.sorting.direction = 'ASC';
     }
     this.forceUpdate();
+  }
+
+  onSelected(id) {
+    let idx = this.bulkOps.selectedItems.indexOf(id);
+    if (idx > -1) {
+      this.bulkOps.selectedItems.splice(idx, 1);
+    } else {
+      this.bulkOps.selectedItems.push(id);
+    }
+    this.setState(this.getStoreState());
   }
 
   onBulkRemove () {
