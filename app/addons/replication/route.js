@@ -33,7 +33,7 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   defaultView: function (databaseName) {
     const sourceDatabase = databaseName || '';
     Actions.initReplicator(sourceDatabase);
-    this.setComponent('#dashboard-content', Components.ReplicationPageController);
+    this.setComponent('#dashboard-content', Components.ReplicationController);
   }
 });
 

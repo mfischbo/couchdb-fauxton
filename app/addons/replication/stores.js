@@ -142,6 +142,14 @@ const ReplicationStore = FauxtonAPI.Store.extend({
       case ActionTypes.INIT_REPLICATION:
         this._loading = true;
         this._sourceDatabase = action.options.sourceDatabase;
+
+        if (this._sourceDatabase) {
+          this._replicationSource = Constants.REPLICATION_SOURCE.LOCAL;
+          this._remoteSource = '';
+          this._replicationTarget = '';
+          this._targetDatabase = '';
+          this._remoteTarget = '';
+        }
       break;
 
       case ActionTypes.REPLICATION_DATABASES_LOADED:
