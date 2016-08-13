@@ -14,6 +14,7 @@ import React from 'react';
 import Stores from './stores';
 import Actions from './actions';
 import FauxtonAPI from '../../../core/api';
+import FauxtonComponentsReact from '../../fauxton/components.react';
 import './assets/less/bookmark-manager.less';
 
 const store = Stores.bookmarkStore;
@@ -22,13 +23,14 @@ export default class BookmarksController extends React.Component {
 
   constructor () {
     super();
-    this.state = this.getStoreState();
     Actions.initialize();
+    this.state = this.getStoreState();
   }
 
   getStoreState() {
     return {
-      focusedBookmark: store.getFocusedBookmark()
+      focusedBookmark: store.getFocusedBookmark(),
+      page: store.getPage()
     };
   }
 
@@ -47,10 +49,12 @@ export default class BookmarksController extends React.Component {
   render() {
     return (
       <div className="bookmarks-page">
-        <BookmarkForm
-          bookmark={this.state.focusedBookmark}/>
+        <div className="bookmark-form">
+          <BookmarkForm
+            bookmark={this.state.focusedBookmark}/>
+        </div>
         <BookmarkTable />
-        <BookmarkPagination/>
+        <BookmarkPagination page={this.state.page} />
       </div>
     );
   }
@@ -282,43 +286,27 @@ class BookmarkTable extends React.Component {
   }
 }
 
+/**
+ * Component to display a pagination navigation
+ */
 class BookmarkPagination extends React.Component {
 
-  constructor() {
-    super();
-    this.state = this.getStoreState();
+  constructor (props) {
+    super(props);
   }
 
-  getStoreState() {
-    return {
-      page: store.getPage(),
-      bookmarks: store.getBookmarks()
-    };
-  }
-
-  componentDidMount() {
-    store.on('change', this.onChange, this);
-  }
-
-  componentWillUnmount() {
-    store.off('change', this.onChange, this);
-  }
-
-  onChange() {
-    this.setState(this.getStoreState());
-  }
-
-  render() {
+  render () {
     return (
-      <footer className="">
-        <button onClick={(e) => Actions.previousPage(this.state.bookmarks, this.state.page)}>
-          PREV
-        </button>
-          Showing some bookmarks
-        <button onClick={(e) => Actions.nextPage(this.state.bookmarks, this.state.page)}>
-          NEXT
-        </button>
-
+      <footer className="pagination-footer">
+        <div className="bookmark-pagination">
+          <FauxtonComponentsReact.Pagination
+            page={this.props.page.currentPage + 1}
+            total={this.props.page.numberOfElements}
+            urlPrefix="#/replication/bookmarks?page="/>
+        </div>
+        <div className="current-bookmarks">
+          Showing {this.props.page.firstElement} - {this.props.page.lastElement} of {this.props.page.numberOfElements} bookmarks
+        </div>
       </footer>
     );
   }

@@ -13,6 +13,8 @@ import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
+const PAGE_SIZE = FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
+
 const BookmarkStore = FauxtonAPI.Store.extend({
   initialize: function () {
     /*
@@ -30,10 +32,13 @@ const BookmarkStore = FauxtonAPI.Store.extend({
      * Contains information about pagination
      */
     this._page = {
+      numberOfElements: Object.keys(this._bookmarks).length,
       hasNextPage: false,
       hasPreviousPage: false,
       numberOfPages: 1,
-      currentPage: 0
+      currentPage: 0,
+      firstElement: 0,
+      lastElement: 0
     };
   },
 
@@ -83,8 +88,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
    * Sets the meta information for the current page
    * @param Page the new page to be used
    */
-  setPage(page) {
-    console.log(page);
+  setPage (page) {
     this._page = page;
   },
 
@@ -107,17 +111,42 @@ const BookmarkStore = FauxtonAPI.Store.extend({
     this._bookmarks[bookmark.id] = bookmark;
   },
 
+  /**
+   * Method to update the current page object.
+   * @param page The page to calculate the page object for. Must be an integer
+   * between 0 (first page) and n (last page) or undefined.
+   * If undefined the method recalculates the page object for the current amount
+   * of elements
+   */
+  _updatePage (page) {
+    if (!page) {
+      page = this._page.currentPage;
+    }
+    const cnt = Object.keys(this._bookmarks).length;
+    const nPage = {
+      numberOfElements: cnt,
+      hasNextPage: cnt > ((page + 1) * PAGE_SIZE),
+      hasPreviousPage: page > 0,
+      numberOfPages: Math.ceil(cnt / PAGE_SIZE),
+      currentPage: page,
+      firstElement: page * PAGE_SIZE + 1,
+      lastElement: Math.min(page * PAGE_SIZE + PAGE_SIZE, cnt)
+    };
+    this.setPage(nPage);
+  },
+
   dispatch: function (action) {
     switch (action.type) {
 
       case ActionTypes.BOOKMARK_INIT:
         this.setBookmarks(action.options.bookmarks);
-        this.setPage(action.options.page);
+        this._updatePage(action.options.page);
         this.triggerChange();
         break;
 
       case ActionTypes.BOOKMARK_SAVE_BOOKMARK:
         this._saveBookmark(action.options.bookmark);
+        this._updatePage(action.options.page);
         this.triggerChange();
         break;
 
@@ -128,11 +157,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.BOOKMARK_DELETE_BOOKMARK:
         this._deleteBookmark(action.options.bookmark);
-        this.triggerChange();
-        break;
-
-      case ActionTypes.BOOKMARK_PAGE_UPDATE:
-        this.setPage(action.options.page);
+        this._updatePage(action.options.page);
         this.triggerChange();
         break;
     }

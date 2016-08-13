@@ -15,26 +15,25 @@ import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
 
 
-function initialize() {
+/**
+ * Initializes the bookmark manager.
+ * This function loads the available bookmarks from a persistent storage
+ * and notifies the store to update it's internal datastructures
+ */
+function initialize () {
   let bookmarks = {};
   if (localStorage.getItem('__bookmarks')) {
     bookmarks = JSON.parse(localStorage.getItem('__bookmarks'));
   }
 
-  // calculate page information
-  const cnt = Object.keys(bookmarks).length;
-  const page = {
-    hasNextPage: cnt > FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE,
-    hasPreviousPage: false,
-    numberOfPages: Math.ceil(cnt / FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE),
-    currentPage: 0
-  };
+  const params = app.getParams();
+  let page = params.page ? parseInt(params.page, 10) : 1;
 
   FauxtonAPI.dispatch({
     type: ActionTypes.BOOKMARK_INIT,
     options: {
       bookmarks: bookmarks,
-      page: page
+      page: page - 1
     }
   });
 }
@@ -69,7 +68,7 @@ function deleteBookmark (bookmark) {
  * Saves the bookmark in a repository and triggers an update on the store
  * @param The bookmark to be stored
  */
-function saveBookmark(bookmark) {
+function saveBookmark (bookmark) {
   bookmark.id = _uuid();
 
   // For now we use local storage and switch to couchdb later on
@@ -90,63 +89,6 @@ function saveBookmark(bookmark) {
 }
 
 /**
- * Displays the previous page on the table of bookmarks.
- * If the page currently being displayed is 0 the invocation has no effect
- */
-function previousPage (bookmarks, page) {
-
-  if (page.hasPreviousPage) {
-    const cnt = Object.keys(bookmarks).length;
-
-    const nPage = {
-      hasNextPage: true,
-      hasPreviousPage: (page.currentPage > 1),
-      numberOfPages: Math.ceil(cnt / FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE),
-      currentPage: page.currentPage - 1
-    };
-
-    FauxtonAPI.dispatch({
-      type: ActionTypes.BOOKMARK_PAGE_UPDATE,
-      options: {
-        page: nPage
-      }
-    });
-  }
-}
-
-/**
- * Displays the next page on the table of bookmarks.
- * If the page currently being displayed is the last available page the
- * invocation has no effect.
- */
-function nextPage (bookmarks, page) {
-
-  // if we have enough many elements
-  if (page.hasNextPage) {
-
-    const cnt = Object.keys(bookmarks).length;
-    const hasNextIndex = (page.currentPage + 2)
-      * FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
-
-    // create a new page
-    const nPage = {
-      hasNextPage: Object.keys(bookmarks).length > hasNextIndex,
-      hasPreviousPage: true,
-      numberOfPages: Math.ceil(cnt / FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE),
-      currentPage: page.currentPage + 1
-    };
-
-    // and dispatch an update
-    FauxtonAPI.dispatch({
-      type: ActionTypes.BOOKMARK_PAGE_UPDATE,
-      options: {
-        page: nPage
-      }
-    });
-  }
-}
-
-/**
  * TODO: Remove this. Only used temporaryly
  */
 function _uuid() {
@@ -163,7 +105,5 @@ export default {
   initialize,
   focusBookmark,
   deleteBookmark,
-  saveBookmark,
-  previousPage,
-  nextPage
+  saveBookmark
 };
