@@ -142,5 +142,6 @@ export default {
   initialize,
   focusBookmark,
   deleteBookmark,
-  saveBookmark
+  saveBookmark,
+  bulkRemove
 };

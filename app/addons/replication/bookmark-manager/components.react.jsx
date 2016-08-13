@@ -178,14 +178,20 @@ class BookmarkTable extends React.Component {
       selectedItems: []
     };
 
+    this.filter = {
+      term: ''
+    };
+
     this.onToggleSelect = this.onToggleSelect.bind(this);
+    this.onBulkRemove = this.onBulkRemove.bind(this);
   }
 
   getStoreState () {
     return {
       bookmarks: store.getBookmarks(),
       page: store.getPage(),
-      bulkOps : this.bulkOps
+      bulkOps: this.bulkOps,
+      filter: this.filter
     };
   }
 
@@ -201,12 +207,27 @@ class BookmarkTable extends React.Component {
     this.setState(this.getStoreState());
   }
 
-  getPreparedModel () {
+  getPreparedModel() {
+
     const bookmarks = [];
+    const term = this.filter.term;
+
     Object.keys(this.state.bookmarks).map(id => {
 
-      // TODO: This is also a nice spot for a filter ;)
-      bookmarks.push(this.state.bookmarks[id]);
+      let bookmark = this.state.bookmarks[id];
+
+      // Apply the filter function if a term is set in filter.term
+      if (term.length > 0) {
+        if (bookmark.host.startsWith(term) ||
+          bookmark.user.startsWith(term) ||
+          bookmark.database.startsWith(term)) {
+
+          bookmarks.push(bookmark);
+        }
+      } else {
+        // no filter set
+        bookmarks.push(bookmark);
+      }
     });
 
     // apply sorting
@@ -282,7 +303,7 @@ class BookmarkTable extends React.Component {
     this.forceUpdate();
   }
 
-  onSelected(id) {
+  onSelected (id) {
     let idx = this.bulkOps.selectedItems.indexOf(id);
     if (idx > -1) {
       this.bulkOps.selectedItems.splice(idx, 1);
@@ -294,6 +315,7 @@ class BookmarkTable extends React.Component {
 
   onBulkRemove () {
     // TODO: Add a user confirmation here
+    debugger;
     Actions.bulkRemove(this.bulkOps.selectedItems);
   }
 
@@ -311,11 +333,23 @@ class BookmarkTable extends React.Component {
     this.setState(this.getStoreState());
   }
 
+  onFilterTermChanged (value) {
+    this.filter.term = value;
+    this.setState(this.getStoreState());
+  }
+
 
   render () {
     const entries = this.createTableEntries();
     return (
       <div className="bookmarks-table">
+        <div className="row-fluid">
+          <div className="span6">
+            <input type="text"
+              value={this.filter.term}
+              onChange={(e) => this.onFilterTermChanged(e.target.value) }/>
+          </div>
+        </div>
         <table className="table table-striped">
           <thead>
             <tr>
