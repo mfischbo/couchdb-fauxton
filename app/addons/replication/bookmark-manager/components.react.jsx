@@ -14,9 +14,11 @@ import React from 'react';
 import Stores from './stores';
 import Actions from './actions';
 import FauxtonAPI from '../../../core/api';
+import Components from '../../components/react-components.react';
 import FauxtonComponentsReact from '../../fauxton/components.react';
 import './assets/less/bookmark-manager.less';
 
+const BulkActionComponent = Components.BulkActionComponent;
 const store = Stores.bookmarkStore;
 
 export default class BookmarksController extends React.Component {
@@ -170,12 +172,20 @@ class BookmarkTable extends React.Component {
       property: 'database',
       direction: 'ASC'
     };
+
+    this.bulkOps = {
+      isChecked: false,
+      selectedItems: []
+    };
+
+    this.onToggleSelect = this.onToggleSelect.bind(this);
   }
 
   getStoreState () {
     return {
       bookmarks: store.getBookmarks(),
-      page: store.getPage()
+      page: store.getPage(),
+      bulkOps : this.bulkOps
     };
   }
 
@@ -230,7 +240,7 @@ class BookmarkTable extends React.Component {
         return (
           <tr key={bm.id}>
             <td>
-              <input type="checkbox"/>
+              <input type="checkbox" checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}/>
             </td>
             <td>{bm.database}</td>
             <td>{bm.host}</td>
@@ -259,6 +269,25 @@ class BookmarkTable extends React.Component {
     this.forceUpdate();
   }
 
+  onBulkRemove () {
+    // TODO: Add a user confirmation here
+    Actions.bulkRemove(this.bulkOps.selectedItems);
+  }
+
+  onSelectAll () {
+    console.log('Select all');
+  }
+
+  onToggleSelect() {
+    this.bulkOps.isChecked = !this.bulkOps.isChecked;
+    if (this.bulkOps.isChecked) {
+      this.bulkOps.selectedItems = Object.keys(store.getBookmarks());
+    } else {
+      this.bulkOps.selectedItems = [];
+    }
+    this.setState(this.getStoreState());
+  }
+
 
   render () {
     const entries = this.createTableEntries();
@@ -267,7 +296,15 @@ class BookmarkTable extends React.Component {
         <table className="table table-striped">
           <thead>
             <tr>
-              <th className="checkbox"></th>
+              <th className="checkbox tableview-header-el-checkbox">
+                <BulkActionComponent
+                  isChecked={this.bulkOps.isChecked}
+                  hasSelectedItem={this.bulkOps.selectedItems.length > 0}
+                  removeItem={this.onBulkRemove}
+                  selectAll={this.onSelectAll}
+                  toggleSelect={this.onToggleSelect}
+                />
+              </th>
               <SortingTableHead callback={() => this.onSortingChange('database')}
                 property="database" sorting={this.sorting}>Database</SortingTableHead>
               <SortingTableHead callback={() => this.onSortingChange('host') }

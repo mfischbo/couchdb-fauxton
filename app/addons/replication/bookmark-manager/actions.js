@@ -56,10 +56,47 @@ function focusBookmark (bookmark) {
  * @param The bookmark to be deleted
  */
 function deleteBookmark (bookmark) {
+  let bookmarks = {};
+  if (localStorage.getItem('__bookmarks')) {
+    bookmarks = JSON.parse(localStorage.getItem('__bookmarks'));
+  }
+
+  if (bookmarks[bookmark.id]) {
+    delete bookmarks[bookmark.id];
+  }
+  localStorage.setItem('__bookmarks', JSON.stringify(bookmarks));
+
   FauxtonAPI.dispatch({
-    type: ActionTypes.BOOKMARK_DELETE_BOOKMARK,
+    type: ActionTypes.BOOKMARK_UPDATE_BOOKMARKS,
     options: {
-      bookmark: bookmark
+      bookmarks: bookmarks
+    }
+  });
+}
+
+/**
+ * Removes a set of bookmarks given their id's
+ * @param An array of id's containing the bookmarks to be removed
+ */
+function bulkRemove (removeables) {
+
+  let bookmarks = {};
+  if (localStorage.getItem('__bookmarks')) {
+    bookmarks = JSON.parse(localStorage.getItem('__bookmarks'));
+  }
+
+  for (let i in bookmarks) {
+    if (removeables.indexOf(i) > -1) {
+      delete bookmarks[i];
+    }
+  }
+
+  localStorage.setItem('__bookmarks', JSON.stringify(bookmarks));
+
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_UPDATE_BOOKMARKS,
+    options: {
+      bookmarks: bookmarks
     }
   });
 }
@@ -80,9 +117,9 @@ function saveBookmark (bookmark) {
   localStorage.setItem('__bookmarks', JSON.stringify(bookmarks));
 
   FauxtonAPI.dispatch({
-    type: ActionTypes.BOOKMARK_SAVE_BOOKMARK,
+    type: ActionTypes.BOOKMARK_UPDATE_BOOKMARKS,
     options: {
-      bookmark: bookmark
+      bookmarks: bookmarks
     }
   });
   return true;

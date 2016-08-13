@@ -93,25 +93,6 @@ const BookmarkStore = FauxtonAPI.Store.extend({
   },
 
   /**
-   * Removes the bookmark from the internal map of stored bookmarks
-   * @param The bookmark to be removed
-   */
-  _deleteBookmark(bookmark) {
-    if (this._focusedBookmark === bookmark) {
-      this.setFocusedBookmark({});
-    }
-    delete this._bookmarks[bookmark.id];
-  },
-
-  /**
-   * Stores the bookmark internally
-   * @param The bookmark to be stored.
-   */
-  _saveBookmark (bookmark) {
-    this._bookmarks[bookmark.id] = bookmark;
-  },
-
-  /**
    * Method to update the current page object.
    * @param page The page to calculate the page object for. Must be an integer
    * between 0 (first page) and n (last page) or undefined.
@@ -144,19 +125,13 @@ const BookmarkStore = FauxtonAPI.Store.extend({
         this.triggerChange();
         break;
 
-      case ActionTypes.BOOKMARK_SAVE_BOOKMARK:
-        this._saveBookmark(action.options.bookmark);
-        this._updatePage(action.options.page);
-        this.triggerChange();
-        break;
-
       case ActionTypes.BOOKMARK_FOCUS_BOOKMARK:
         this.setFocusedBookmark(action.options.bookmark);
         this.triggerChange();
         break;
 
-      case ActionTypes.BOOKMARK_DELETE_BOOKMARK:
-        this._deleteBookmark(action.options.bookmark);
+      case ActionTypes.BOOKMARK_UPDATE_BOOKMARKS:
+        this.setBookmarks(action.options.bookmarks);
         this._updatePage(action.options.page);
         this.triggerChange();
         break;
