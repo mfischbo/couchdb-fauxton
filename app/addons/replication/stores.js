@@ -20,7 +20,7 @@ const ReplicationStore = FauxtonAPI.Store.extend({
   initialize: function () {
     this.reset();
 
-    this._activePage = '';
+    this._activePage = 'replication';
   },
 
   reset: function () {
@@ -136,8 +136,9 @@ const ReplicationStore = FauxtonAPI.Store.extend({
     switch (action.type) {
 
       case ActionTypes.REPLICATION_SWITCH_TAB:
+        console.log('switching page to ', action.options.page);
         this._activePage = action.options.page;
-      break;
+        break;
 
       case ActionTypes.INIT_REPLICATION:
         this._loading = true;

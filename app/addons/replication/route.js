@@ -14,13 +14,17 @@ import app from '../../app';
 import FauxtonAPI from '../../core/api';
 import Actions from './actions';
 import Components from './components.react';
+import Bookmark from './bookmark-manager/components.react';
 
 
 var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   layout: 'one_pane',
   routes: {
     'replication': 'defaultView',
-    'replication/:dbname': 'defaultView'
+    'replication/:dbname': 'defaultView',
+    'advanced-replication': 'showAdvancedReplication',
+    'bookmarks': 'showBookmarks',
+    'activity': 'showActivity'
   },
   selectedHeader: 'Replication',
   apiUrl: function () {
@@ -33,6 +37,20 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   defaultView: function (databaseName) {
     const sourceDatabase = databaseName || '';
     Actions.initReplicator(sourceDatabase);
+    Actions.switchTab('replication');
+    this.removeComponent('#right-header');
+    this.setComponent('#dashboard-content', Components.ReplicationPageController);
+  },
+  showAdvancedReplication: function () {
+    this.removeComponent('#right-header');
+    this.setComponent('#dashboard-content', Components.ReplicationPageController);
+  },
+  showBookmarks: function () {
+    this.setComponent('#right-header', Bookmark.BookmarkSearchInput);
+    this.setComponent('#dashboard-content', Components.ReplicationPageController);
+  },
+  showActivity: function () {
+    this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   }
 });

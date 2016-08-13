@@ -21,7 +21,7 @@ import './assets/less/bookmark-manager.less';
 const BulkActionComponent = Components.BulkActionComponent;
 const store = Stores.bookmarkStore;
 
-export default class BookmarksController extends React.Component {
+class BookmarksController extends React.Component {
 
   constructor () {
     super();
@@ -405,3 +405,18 @@ class BookmarkPagination extends React.Component {
     );
   }
 }
+
+
+class BookmarkSearchInput extends React.Component {
+
+  render() {
+    return (
+      <span>FOOBAR</span>
+    );
+  }
+}
+
+export default {
+  BookmarksController: BookmarksController,
+  BookmarkSearchInput: BookmarkSearchInput
+};

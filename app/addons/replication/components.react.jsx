@@ -33,6 +33,8 @@ const PasswordModal = AuthComponents.PasswordModal;
 const TabElementWrapper = Components.TabElementWrapper;
 const TabElement = Components.TabElement;
 
+const Bookmarks = BookmarksController.BookmarksController;
+
 /**
  * The root component for the replication page.
  * The component consists of multiple tabs and tab pages and can
@@ -48,18 +50,7 @@ class ReplicationPageController extends React.Component {
     return (
     <div className="scrollable">
       <ReplicatorTabs />
-      <TabPage id="simple-replication">
-        <ReplicationController />
-      </TabPage>
-      <TabPage id="advanced-replication">
-        <AdvancedReplicationController />
-      </TabPage>
-      <TabPage id="bookmark-manager">
-        <BookmarksController />
-      </TabPage>
-      <TabPage id="replication-activity">
-        <ActivityController />
-      </TabPage>
+      <TabPage />
     </div>
     );
   }
@@ -74,51 +65,30 @@ class ReplicatorTabs extends React.Component {
   constructor () {
     super();
     this.state = this.getStoreState();
-    this.handleTabClick = this.handleTabClick.bind(this);
   }
 
-  getStoreState () {
+  getStoreState() {
     return {
-      activePage: store.getActivePage()
+      page: store.getActivePage()
     };
   }
 
-  componentDidMount () {
-    store.on('change', this.onStoreChange, this);
-
-    // on default we select the first page
-    Actions.switchTab(this.props.pages[0]);
+  handleTabClick(segment, page) {
+    Actions.switchTab(page.id);
+    FauxtonAPI.navigate(segment, {});
   }
 
-  componentWillUnmount () {
-    store.off('change', this.onStoreChange, this);
-  }
-
-  onStoreChange () {
-    this.setState(this.getStoreState());
-  }
-
-  handleTabClick (e) {
-    const radioName = e.target.value;
-
-    this.props.pages.map((page) => {
-      if (page.label === radioName) {
-        Actions.switchTab(page);
-      }
-    });
-  }
-
-  createTabs () {
+  createTabs() {
     return (
       this.props.pages.map((page, i) => {
-
-        const isActive = (page === this.state.activePage);
+        const isActive = this.state.page === page.id;
+        const href = '/' + page.href;
         return (
           <TabElement
             key={i}
             selected={isActive}
             text={page.label}
-            onChange={this.handleTabClick} />
+            onChange={(e) => this.handleTabClick(href, page)} />
         );
       })
     );
@@ -135,10 +105,10 @@ class ReplicatorTabs extends React.Component {
 };
 ReplicatorTabs.defaultProps = {
   pages : [
-    { id: 'simple-replication', label: 'Simple Replication'},
-    { id: 'advanced-replication', label: 'Advanced Replication'},
-    { id: 'bookmark-manager', label: 'Bookmarks'},
-    { id: 'replication-activity', label: 'Activity'}
+    { id: 'replication', label: 'Simple Replication', href: 'replication'},
+    { id: 'advanced-replication', label: 'Advanced Replication', href: 'advanced-replication'},
+    { id: 'bookmarks', label: 'Bookmarks', href: 'bookmarks'},
+    { id: 'activity', label: 'Activity', href: 'activity'}
   ]
 };
 
@@ -154,31 +124,23 @@ class TabPage extends React.Component {
 
   getStoreState () {
     return {
-      activePage: store.getActivePage()
+      page: store.getActivePage()
     };
   }
 
-  componentDidMount () {
-    store.on('change', this.onChange, this);
-  }
-
-  componentWillUnmount () {
-    store.off('change', this.onChange, this);
-  }
-
-  onChange () {
-    this.setState(this.getStoreState());
-  }
-
-  render () {
-    if (this.props.id === this.state.activePage.id) {
-      return (
-        <div id={this.props.id}>
-          {this.props.children}
-        </div>
-      );
-    } else {
-      return null;
+  render() {
+    const id = this.state.page;
+    switch (id) {
+      case 'replication':
+        return (<ReplicationController />);
+      case 'advanced-replication':
+        return (<AdvancedReplicationController />);
+      case 'bookmarks':
+        return (<Bookmarks />);
+      case 'activity':
+        return (<ActivityController />);
+      default:
+        return null;
     }
   }
 }
