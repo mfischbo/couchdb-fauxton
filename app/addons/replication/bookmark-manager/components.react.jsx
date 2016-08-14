@@ -27,7 +27,6 @@ class BookmarksController extends React.Component {
 
   constructor () {
     super();
-    Actions.initialize();
     this.state = this.getStoreState();
   }
 
@@ -69,76 +68,46 @@ class BookmarkForm extends React.Component {
 
     constructor (props) {
       super(props);
-      this.state = this.getLocalState(props);
-      this.saveBookmark = this.saveBookmark.bind(this);
-      this.cancelEdit = this.cancelEdit.bind(this);
     }
 
-    getLocalState (props) {
-      return {
-        id: props.bookmark.id || '',
-        host: props.bookmark.host || '',
-        user: props.bookmark.user || '',
-        database: props.bookmark.database || ''
-      };
-    }
-
-    componentWillReceiveProps(props) {
-      this.setState(this.getLocalState(props));
-    }
-
-    onInputChange (key, value) {
-      const s = this.state;
-      s[key] = value;
-      this.setState(s);
-    }
-
-    saveBookmark () {
-      const success = Actions.saveBookmark(this.state);
-      if (success) {
-        this.setState(this.getLocalState({ bookmark: {} }));
-        this.props.onSaveSuccess();
+    render() {
+      if (!this.props.bookmark) {
+        return null;
       }
-    }
 
-    cancelEdit() {
-      this.props.onDismiss();
-    }
-
-    render () {
       return (
         <div className="row-fluid">
           <div className="span12">
             <label>Remote Host</label>
             <input type="text"
-              value={this.state.host}
-              onChange={(e) => this.onInputChange('host', e.target.value) }/>
+              value={this.props.bookmark.host || ''}
+              onChange={(e) => this.props.onInputChange('host', e.target.value) }/>
           </div>
 
           <div className="span12">
             <label>Username</label>
             <input type="text"
-              value={this.state.user}
-              onChange={(e) => this.onInputChange('user', e.target.value) }/>
+              value={this.props.bookmark.user || ''}
+              onChange={(e) => this.props.onInputChange('user', e.target.value) }/>
           </div>
 
           <div className="span12">
             <label>Database</label>
             <input type="text"
-              value={this.state.database}
-              onChange={(e) => this.onInputChange('database', e.target.value) }/>
+              value={this.props.bookmark.database || ''}
+              onChange={(e) => this.props.onInputChange('database', e.target.value) }/>
           </div>
 
           <div className="span6">
             <button type="button" className="btn btn-success"
-              onClick={this.saveBookmark}>
+              onClick={this.props.onSave}>
               <i className="icon icon-ok"></i> Save
             </button>
           </div>
 
           <div className="span6">
             <button type="button" className="btn btn-danger"
-              onClick={this.cancelEdit}>
+              onClick={this.props.onDismiss}>
               <i className="icon fonticon-delete"></i> Cancel
             </button>
           </div>
@@ -216,7 +185,6 @@ class BookmarkTable extends React.Component {
   }
 
   onStoreChange() {
-    console.log('Set state in bookmarks table');
     this.setState(this.getStoreState());
   }
 
@@ -332,10 +300,6 @@ class BookmarkTable extends React.Component {
     Actions.bulkRemove(this.bulkOps.selectedItems);
   }
 
-  onSelectAll () {
-    console.log('Select all');
-  }
-
   onToggleSelect() {
     this.bulkOps.isChecked = !this.bulkOps.isChecked;
     if (this.bulkOps.isChecked) {
@@ -358,7 +322,6 @@ class BookmarkTable extends React.Component {
                   isChecked={this.bulkOps.isChecked}
                   hasSelectedItem={this.bulkOps.selectedItems.length > 0}
                   removeItem={this.onBulkRemove}
-                  selectAll={this.onSelectAll}
                   toggleSelect={this.onToggleSelect}
                 />
               </th>
@@ -426,22 +389,14 @@ class AddBookmarkWidget extends React.Component {
     super(props);
     this.state = this.getStoreState();
     this.onTrayToggle = this.onTrayToggle.bind(this);
-    this.onTrayHide = this.onTrayHide.bind(this);
-    this.onFinalizeEditing = this.onFinalizeEditing.bind(this);
+    this.onFormInputChange = this.onFormInputChange.bind(this);
+    this.onSave = this.onSave.bind(this);
   }
 
   getStoreState () {
-    const retval = {
-      visible: false,
+    return {
       bookmark: store.getFocusedBookmark()
     };
-
-    // check if a bookmark has been selected for editing
-    // if so we set the tray visible
-    if (retval.bookmark && retval.bookmark.id) {
-      retval.visible = true;
-    }
-    return retval;
   }
 
   componentDidMount() {
@@ -452,43 +407,45 @@ class AddBookmarkWidget extends React.Component {
     store.off('change', this.onStoreChange, this);
   }
 
-  onStoreChange () {
-    const s = this.getStoreState();
-    if (s.visible) {
-      this.setState(s);
-      this.refs.newBookmarkTray.setVisible(true);
+  onStoreChange() {
+    const newState = this.getStoreState();
+    if (newState.bookmark) {
+      this.refs.newBookmarkTray.show();
+    } else {
+      this.refs.newBookmarkTray.hide();
     }
+    this.setState(newState);
   }
 
   onTrayToggle(event) {
     event.preventDefault();
-    if (this.state.visible) {
-      this.refs.newBookmarkTray.hide();
+    if (this.state.bookmark) {
+      Actions.clearFocusedBookmark();
     } else {
-      this.refs.newBookmarkTray.show();
+      Actions.focusBookmark({});
     }
-    this.setState({ visible: !this.state.visible });
   }
 
-  onFinalizeEditing () {
-    this.refs.newBookmarkTray.hide();
-    this.setState({
-      visible: false,
-      bookmark: {}
-    });
-    console.log(this.state);
+  onFormInputChange(key, value) {
+    const s = this.state;
+    s.bookmark[key] = value;
+    this.setState(s);
   }
 
-  onTrayHide () {
-    this.setState({ visible: false });
+  onSave() {
+    Actions.saveBookmark(this.state.bookmark);
   }
 
+  onDismiss() {
+    Actions.clearFocusedBookmark();
+  }
 
   render() {
+    const isActive = (this.state.bookmark != undefined);
     return (
       <div>
         <ToggleHeaderButton
-          selected={this.state.visible}
+          selected={isActive}
           toggleCallback={this.onTrayToggle}
           containerClasses="header-control-box"
           title="Create a new bookmark"
@@ -496,12 +453,13 @@ class AddBookmarkWidget extends React.Component {
           text="Add Bookmark"/>
         <FauxtonComponentsReact.Tray ref="newBookmarkTray"
           className="new-bookmark-tray"
-          onAutoHide={this.onTrayHide}>
+          onAutoHide={this.onDismiss}>
           <div className="bookmark-form">
             <BookmarkForm
               bookmark={this.state.bookmark}
-              onSaveSuccess={this.onFinalizeEditing}
-              onDismiss={this.onFinalizeEditing}/>
+              onInputChange={this.onFormInputChange}
+              onSave={this.onSave}
+              onDismiss={this.onDismiss}/>
           </div>
         </FauxtonComponentsReact.Tray>
       </div>

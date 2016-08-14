@@ -26,7 +26,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
     /**
      * The bookmark that is currently subject to be edited
      */
-    this._focusedBookmark = {};
+    this._focusedBookmark = undefined;
 
     /**
      * Contains information about pagination
@@ -147,7 +147,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.BOOKMARK_UPDATE_BOOKMARKS:
         this.setBookmarks(action.options.bookmarks);
-        this.setFocusedBookmark({});
+        this.setFocusedBookmark(undefined);
         this._updatePage(action.options.page);
         this.triggerChange();
         break;

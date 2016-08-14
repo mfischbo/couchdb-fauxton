@@ -51,6 +51,16 @@ function focusBookmark (bookmark) {
   });
 }
 
+function clearFocusedBookmark () {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_FOCUS_BOOKMARK,
+    options: {
+      bookmark: undefined
+    }
+  });
+}
+
+
 /**
  * Deletes the bookmark from the map of available bookmarks
  * @param The bookmark to be deleted
@@ -152,6 +162,7 @@ function _uuid() {
 export default {
   initialize,
   focusBookmark,
+  clearFocusedBookmark,
   deleteBookmark,
   saveBookmark,
   bulkRemove,

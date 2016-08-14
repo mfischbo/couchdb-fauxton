@@ -13,6 +13,7 @@
 import app from '../../app';
 import FauxtonAPI from '../../core/api';
 import Actions from './actions';
+import BookmarkActions from './bookmark-manager/actions';
 import Components from './components.react';
 import Bookmark from './bookmark-manager/components.react';
 
@@ -48,6 +49,7 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   },
   showBookmarks: function () {
     //Actions.switchTab('bookmarks');
+    BookmarkActions.initialize();
     this.setComponent('#right-header', Bookmark.BookmarkHeader);
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   },
