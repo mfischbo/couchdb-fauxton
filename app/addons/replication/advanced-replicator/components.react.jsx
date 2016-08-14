@@ -19,11 +19,19 @@ import Components from '../../components/react-components.react';
 import ReplicationType from '../components.react';
 import ReplicationSource from '../components.react';
 import ReplicationTarget from '../components.react';
+
+import AdvancedDatabaseSearch from '../bookmark-manager/components.react';
+import BookmarkStores from '../bookmark-manager/stores';
+import BookmarkActions from '../bookmark-manager/actions';
+
 import './assets/less/advanced-replicator.less';
 
 const store = Stores.advancedReplicationStore;
+const bookmarkStore = BookmarkStores.bookmarkStore;
+
 const TypeaheadField = Components.TypeaheadField;
 const StyledSelect = Components.StyledSelect;
+const DatabaseSearch = AdvancedDatabaseSearch.AdvancedDatabaseSearch;
 
 export default class AdvancedReplicationController extends React.Component {
 
@@ -98,6 +106,7 @@ class DatabaseEntryRow extends React.Component {
   constructor (props) {
     super(props);
     this.state = this.getStoreState();
+    this.onEntrySelected = this.onEntrySelected.bind(this);
   }
 
   componentWillMount () {
@@ -139,14 +148,6 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
-  onSourceTypeChange (value) {
-    if (this.props.type == 'SOURCE') {
-      Actions.setSourceType(value);
-    } else {
-      Actions.setTargetType(value);
-    }
-  }
-
   onPasswordChange (value) {
     if (this.props.type == 'SOURCE') {
       Actions.setSourcePassword(value);
@@ -155,51 +156,40 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
-  createDatabaseField () {
-    if (this.state.sourceType === 'LOCAL') {
-      return (
-        <TypeaheadField
-          list={this.props.databases}
-          placeholder="Database name"
-          value={this.state.database || ''}
-          onChange={(value) => this.onDatabaseChange(value)}/>
-      );
+  onEntrySelected (entry) {
+    console.log('Selection changed to ', entry);
+    if (this.props.type === 'SOURCE') {
+      if (entry.type === 'LOCAL' && store.getLocalDatabases().indexOf(entry.database) > -1) {
+        Actions.updateFilterFunctions(entry.database);
+      }
+      Actions.setSourceDatabase(entry.database);
     } else {
-      return (
-        <input type="text" placeholder="Remote Database URL"/>
-      );
+      Actions.setTargetDatabase(entry.database);
     }
   }
 
-  createSourceTypeOptions () {
-    const options = [
-      { value: 'LOCAL', label: 'Local' },
-      { value: 'REMOTE', label: 'Remote' }
-    ];
-    return options.map(o => {
-      return (<option value={o.value} key={o.value}>{o.label}</option>);
-    });
+  createDatabaseField() {
+    const bookmarks = [];
+    for (let i in this.props.bookmarks)
+      bookmarks.push(this.props.bookmarks[i]);
+
+
+    return (
+      <DatabaseSearch
+        localEntries={this.props.databases}
+        bookmarks={bookmarks}
+        onEntrySelected={this.onEntrySelected}
+      />
+    );
   }
 
   render() {
-    const sourceTypeOptions = this.createSourceTypeOptions();
     const databaseField = this.createDatabaseField();
 
     return (
       <div>
         <div className="row">
-          <div className="span3">{this.props.sourceLabel}</div>
-          <div className="span4">
-            <StyledSelect
-              selectContent={sourceTypeOptions}
-              selectChange={(event) => this.onSourceTypeChange(event.target.value)}
-              selectValue={this.state.sourceType}
-              selectId="replication-source-select"/>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="span3">&nbsp; </div>
+          <div className="span3">Database</div>
           <div className="span4">
             {databaseField}
           </div>
@@ -227,12 +217,14 @@ class SourcePane extends React.Component {
   constructor () {
     super();
     Actions.getLocalDatabases();
+    BookmarkActions.initialize();
     this.state = this.getStoreState();
   }
 
   getStoreState () {
     return {
       localDatabases: store.getLocalDatabases(),
+      bookmarks: bookmarkStore.getBookmarks(),
       filterFunctions: store.getAvailableFilterFunctions(store.getSourceDatabase()),
       proxyUrl: store.getSourceOption('proxyUrl'),
       startingSequence: store.getSourceOption('startingSequence'),
@@ -249,10 +241,12 @@ class SourcePane extends React.Component {
 
   componentWillMount () {
     store.on('change', this.onStoreChange, this);
+    bookmarkStore.on('change', this.onStoreChange, this);
   }
 
   componentWillUnmount () {
     store.off('change', this.onStoreChange, this);
+    bookmarkStore.off('change', this.onStoreChange, this);
   }
 
   createFilterField () {
@@ -313,6 +307,7 @@ class SourcePane extends React.Component {
         <DatabaseEntryRow
           type="SOURCE"
           databases={this.state.localDatabases}
+          bookmarks={this.state.bookmarks}
           sourceLabel="Replication Source"
           passwordLabel="Source Password"/>
       );
@@ -391,6 +386,7 @@ class TargetPane extends React.Component {
     return {
       sourceType: store.getTargetType(),
       localDatabases: store.getLocalDatabases(),
+      bookmarks: bookmarkStore.getBookmarks(),
       continuous: store.getTargetOption('continuous'),
       createTarget: store.getTargetOption('createTarget'),
       documentId: store.getTargetOption('documentId')
@@ -418,6 +414,7 @@ class TargetPane extends React.Component {
       <DatabaseEntryRow
         type="TARGET"
         databases={this.state.localDatabases}
+        bookmarks={this.state.bookmarks}
         sourceLabel="Replication Target"
         passwordLabel="Target Password"/>
     );

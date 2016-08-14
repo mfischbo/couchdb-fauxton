@@ -497,7 +497,166 @@ class BookmarkSearchInput extends React.Component {
   }
 }
 
+/**
+ * Component for searching databases on the local machine
+ * or in the the stored bookmarks
+ */
+class AdvancedDatabaseSearch extends React.Component {
+
+  constructor (props) {
+    super(props);
+    this.state = {
+      term: '',
+      suggestionsVisible: false
+    };
+  }
+
+  /**
+   * Filters the given entries against the current search term
+   * @param The entries to be filterd
+   * @return The entries matching the current search term
+   */
+  applyFilter(entries) {
+    if (this.state.term && this.state.term.length < 1) {
+      return entries;
+    }
+
+    const retval = [];
+    for (let i in entries) {
+      if (typeof entries[i] === 'string' && entries[i].startsWith(this.state.term)) {
+        retval.push(entries[i]);
+      }
+
+      if (typeof entries[i] === 'object') {
+        if (entries[i].host.startsWith(this.state.term) ||
+          entries[i].database.startsWith(this.state.term)) {
+          retval.push(entries[i]);
+        }
+      }
+    }
+    return retval;
+  }
+
+  createLocalEntries() {
+    const candidates = this.applyFilter(this.props.localEntries);
+    const entries = candidates.map(db => {
+      return (
+        <li className="local-entry" key={db}
+          onClick={(e) => this.onSelectEntry(db) }>
+          {db}
+        </li>
+      );
+    });
+
+    return (
+      <ul>
+        <li className="category-headline">Local Databases</li>
+        {entries}
+      </ul>
+    );
+  }
+
+  createBookmarkEntries() {
+    const candidates = this.applyFilter(this.props.bookmarks);
+    const entries = candidates.map(db => {
+      return (
+        <li className="bookmark-entry" key={db.id}
+          onClick={() => this.onSelectEntry(db) }>
+          {db.database} at {db.host}
+        </li>
+      );
+    });
+
+    return (
+      <ul>
+        <li className="category-headline">Bookmarks</li>
+        {entries}
+      </ul>
+    );
+  }
+
+  createSuggestions() {
+    if (!this.state.suggestionsVisible)
+      return null;
+
+    const localDatabases = this.createLocalEntries();
+    const bookmarks = this.createBookmarkEntries();
+
+    return (
+      <div className="advanced-db-search">
+          {localDatabases}
+          {bookmarks}
+      </div>
+    );
+  }
+
+  onInputChange(value) {
+    this.setState({
+      term: value,
+      suggestionsVisible: (value.length > 0)
+    });
+
+    const retval = {
+      database: value,
+      type: 'REMOTE'
+    };
+    this.props.onEntrySelected(retval);
+  }
+
+  onSelectEntry(entry) {
+    console.log('handling click');
+    let value = '';
+    if (typeof entry === 'string') {
+      value = entry;
+    }
+
+    if (typeof entry === 'object') {
+      let schema = entry.host.substr(0, entry.host.indexOf('//') + 2);
+      value = schema + entry.user + '@' + entry.host.substr(schema.length);
+      if (entry.host.charAt(entry.host.length - 1) === '/')
+        value += entry.database;
+      else
+        value += '/' + entry.database;
+    }
+
+    this.setState({
+      term: value,
+      suggestionsVisible: false
+    });
+
+    // expose the result as an object
+    const retval = {
+      database: value,
+      type: (typeof entry === 'string') ? 'LOCAL' : 'REMOTE'
+    };
+    this.props.onEntrySelected(retval);
+  }
+
+  onInputBlur() {
+    const that = this;
+    window.setTimeout(function () {
+      that.setState({ suggestionsVisible: false });
+    }, 200);
+  }
+
+  render() {
+    const suggestions = this.createSuggestions();
+
+    return (
+      <div className="advanced-db-search-widget">
+        <input type="text"
+          value={this.state.term}
+          onChange={(event) => this.onInputChange(event.target.value) }
+          onBlur={(event) => this.onInputBlur()}
+        />
+        {suggestions}
+      </div>
+    );
+  }
+}
+
 export default {
   BookmarksController: BookmarksController,
-  BookmarkHeader: BookmarkHeader
+  BookmarkHeader: BookmarkHeader,
+  AdvancedDatabaseSearch: AdvancedDatabaseSearch
 };
