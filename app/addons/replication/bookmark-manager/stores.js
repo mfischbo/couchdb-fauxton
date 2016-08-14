@@ -40,6 +40,13 @@ const BookmarkStore = FauxtonAPI.Store.extend({
       firstElement: 0,
       lastElement: 0
     };
+
+    /**
+     * Contains the filter term to filter bookmarks
+     */
+    this._filter = {
+      term: '',
+    };
   },
 
   /**
@@ -92,6 +99,14 @@ const BookmarkStore = FauxtonAPI.Store.extend({
     this._page = page;
   },
 
+  getFilter() {
+    return this._filter;
+  },
+
+  setFilter (filter) {
+    this._filter = filter;
+  },
+
   /**
    * Method to update the current page object.
    * @param page The page to calculate the page object for. Must be an integer
@@ -132,7 +147,13 @@ const BookmarkStore = FauxtonAPI.Store.extend({
 
       case ActionTypes.BOOKMARK_UPDATE_BOOKMARKS:
         this.setBookmarks(action.options.bookmarks);
+        this.setFocusedBookmark({});
         this._updatePage(action.options.page);
+        this.triggerChange();
+        break;
+
+      case ActionTypes.BOOKMARK_UPDATE_FILTER:
+        this.setFilter({ term: action.options.term });
         this.triggerChange();
         break;
     }

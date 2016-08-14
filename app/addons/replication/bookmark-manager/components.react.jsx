@@ -11,6 +11,7 @@
 // the License.
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Stores from './stores';
 import Actions from './actions';
 import FauxtonAPI from '../../../core/api';
@@ -19,6 +20,7 @@ import FauxtonComponentsReact from '../../fauxton/components.react';
 import './assets/less/bookmark-manager.less';
 
 const BulkActionComponent = Components.BulkActionComponent;
+const ToggleHeaderButton = Components.ToggleHeaderButton;
 const store = Stores.bookmarkStore;
 
 class BookmarksController extends React.Component {
@@ -51,10 +53,6 @@ class BookmarksController extends React.Component {
   render() {
     return (
       <div className="bookmarks-page">
-        <div className="bookmark-form">
-          <BookmarkForm
-            bookmark={this.state.focusedBookmark}/>
-        </div>
         <BookmarkTable />
         <BookmarkPagination page={this.state.page} />
       </div>
@@ -73,9 +71,10 @@ class BookmarkForm extends React.Component {
       super(props);
       this.state = this.getLocalState(props);
       this.saveBookmark = this.saveBookmark.bind(this);
+      this.cancelEdit = this.cancelEdit.bind(this);
     }
 
-    getLocalState(props) {
+    getLocalState (props) {
       return {
         id: props.bookmark.id || '',
         host: props.bookmark.host || '',
@@ -97,33 +96,50 @@ class BookmarkForm extends React.Component {
     saveBookmark () {
       const success = Actions.saveBookmark(this.state);
       if (success) {
-        this.setState(this.getLocalState({ bookmark: {}}));
+        this.setState(this.getLocalState({ bookmark: {} }));
+        this.props.onSaveSuccess();
       }
+    }
+
+    cancelEdit() {
+      this.props.onDismiss();
     }
 
     render () {
       return (
         <div className="row-fluid">
-          <div className="span3">
+          <div className="span12">
             <label>Remote Host</label>
-            <input type="text" value={this.state.host} onChange={(e) => this.onInputChange('host', e.target.value) }/>
+            <input type="text"
+              value={this.state.host}
+              onChange={(e) => this.onInputChange('host', e.target.value) }/>
           </div>
 
-          <div className="span3">
+          <div className="span12">
             <label>Username</label>
-            <input type="text" value={this.state.user} onChange={(e) => this.onInputChange('user', e.target.value) }/>
+            <input type="text"
+              value={this.state.user}
+              onChange={(e) => this.onInputChange('user', e.target.value) }/>
           </div>
 
-          <div className="span3">
+          <div className="span12">
             <label>Database</label>
-            <input type="text" value={this.state.database} onChange={(e) => this.onInputChange('database', e.target.value) }/>
+            <input type="text"
+              value={this.state.database}
+              onChange={(e) => this.onInputChange('database', e.target.value) }/>
           </div>
 
-          <div className="span3">
-            <label>&nbsp;</label>
+          <div className="span6">
             <button type="button" className="btn btn-success"
               onClick={this.saveBookmark}>
               <i className="icon icon-ok"></i> Save
+            </button>
+          </div>
+
+          <div className="span6">
+            <button type="button" className="btn btn-danger"
+              onClick={this.cancelEdit}>
+              <i className="icon fonticon-delete"></i> Cancel
             </button>
           </div>
         </div>
@@ -178,10 +194,6 @@ class BookmarkTable extends React.Component {
       selectedItems: []
     };
 
-    this.filter = {
-      term: ''
-    };
-
     this.onToggleSelect = this.onToggleSelect.bind(this);
     this.onBulkRemove = this.onBulkRemove.bind(this);
   }
@@ -190,8 +202,8 @@ class BookmarkTable extends React.Component {
     return {
       bookmarks: store.getBookmarks(),
       page: store.getPage(),
-      bulkOps: this.bulkOps,
-      filter: this.filter
+      filter: store.getFilter(),
+      bulkOps: this.bulkOps
     };
   }
 
@@ -203,14 +215,15 @@ class BookmarkTable extends React.Component {
     store.off('change', this.onStoreChange, this);
   }
 
-  onStoreChange () {
+  onStoreChange() {
+    console.log('Set state in bookmarks table');
     this.setState(this.getStoreState());
   }
 
   getPreparedModel() {
 
     const bookmarks = [];
-    const term = this.filter.term;
+    const term = this.state.filter.term;
 
     Object.keys(this.state.bookmarks).map(id => {
 
@@ -333,23 +346,10 @@ class BookmarkTable extends React.Component {
     this.setState(this.getStoreState());
   }
 
-  onFilterTermChanged (value) {
-    this.filter.term = value;
-    this.setState(this.getStoreState());
-  }
-
-
   render () {
     const entries = this.createTableEntries();
     return (
       <div className="bookmarks-table">
-        <div className="row-fluid">
-          <div className="span6">
-            <input type="text"
-              value={this.filter.term}
-              onChange={(e) => this.onFilterTermChanged(e.target.value) }/>
-          </div>
-        </div>
         <table className="table table-striped">
           <thead>
             <tr>
@@ -391,12 +391,12 @@ class BookmarkPagination extends React.Component {
 
   render () {
     return (
-      <footer className="pagination-footer">
+      <footer className="bookmark-footer pagination-footer">
         <div className="bookmark-pagination">
           <FauxtonComponentsReact.Pagination
             page={this.props.page.currentPage + 1}
             total={this.props.page.numberOfElements}
-            urlPrefix="#/replication/bookmarks?page="/>
+            urlPrefix="#/bookmarks?page="/>
         </div>
         <div className="current-bookmarks">
           Showing {this.props.page.firstElement} - {this.props.page.lastElement} of {this.props.page.numberOfElements} bookmarks
@@ -407,16 +407,139 @@ class BookmarkPagination extends React.Component {
 }
 
 
-class BookmarkSearchInput extends React.Component {
+class BookmarkHeader extends React.Component {
+
+  render () {
+    return (
+      <div className="header-right right-db-header flex-layout flex-row">
+        <BookmarkSearchInput />
+        <AddBookmarkWidget />
+      </div>
+    );
+  }
+}
+
+
+class AddBookmarkWidget extends React.Component {
+
+  constructor (props) {
+    super(props);
+    this.state = this.getStoreState();
+    this.onTrayToggle = this.onTrayToggle.bind(this);
+    this.onTrayHide = this.onTrayHide.bind(this);
+    this.onFinalizeEditing = this.onFinalizeEditing.bind(this);
+  }
+
+  getStoreState () {
+    const retval = {
+      visible: false,
+      bookmark: store.getFocusedBookmark()
+    };
+
+    // check if a bookmark has been selected for editing
+    // if so we set the tray visible
+    if (retval.bookmark && retval.bookmark.id) {
+      retval.visible = true;
+    }
+    return retval;
+  }
+
+  componentDidMount() {
+    store.on('change', this.onStoreChange, this);
+  }
+
+  componentWillUnmount() {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange () {
+    const s = this.getStoreState();
+    if (s.visible) {
+      this.setState(s);
+      this.refs.newBookmarkTray.setVisible(true);
+    }
+  }
+
+  onTrayToggle(event) {
+    event.preventDefault();
+    if (this.state.visible) {
+      this.refs.newBookmarkTray.hide();
+    } else {
+      this.refs.newBookmarkTray.show();
+    }
+    this.setState({ visible: !this.state.visible });
+  }
+
+  onFinalizeEditing () {
+    this.refs.newBookmarkTray.hide();
+    this.setState({
+      visible: false,
+      bookmark: {}
+    });
+    console.log(this.state);
+  }
+
+  onTrayHide () {
+    this.setState({ visible: false });
+  }
+
 
   render() {
     return (
-      <span>FOOBAR</span>
+      <div>
+        <ToggleHeaderButton
+          selected={this.state.visible}
+          toggleCallback={this.onTrayToggle}
+          containerClasses="header-control-box"
+          title="Create a new bookmark"
+          fonticon="fonticon-bookmark-ribbon-wplus"
+          text="Add Bookmark"/>
+        <FauxtonComponentsReact.Tray ref="newBookmarkTray"
+          className="new-bookmark-tray"
+          onAutoHide={this.onTrayHide}>
+          <div className="bookmark-form">
+            <BookmarkForm
+              bookmark={this.state.bookmark}
+              onSaveSuccess={this.onFinalizeEditing}
+              onDismiss={this.onFinalizeEditing}/>
+          </div>
+        </FauxtonComponentsReact.Tray>
+      </div>
+    );
+  }
+}
+
+
+/**
+ * Component that allows the user to search for a specific bookmark
+ */
+class BookmarkSearchInput extends React.Component {
+
+  constructor () {
+    super();
+    this.state = {
+      filter: ''
+    };
+  }
+
+  onChange (value) {
+    Actions.setFilter(value);
+    this.setState({ filter: value });
+  }
+
+  render() {
+    return (
+      <div className="bookmark-search-field">
+        <input type="text"
+          value={this.state.filter}
+          onChange={(e) => this.onChange(e.target.value) }
+          placeholder="Search bookmark"/>
+      </div>
     );
   }
 }
 
 export default {
   BookmarksController: BookmarksController,
-  BookmarkSearchInput: BookmarkSearchInput
+  BookmarkHeader: BookmarkHeader
 };

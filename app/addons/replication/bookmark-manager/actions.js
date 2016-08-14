@@ -106,7 +106,9 @@ function bulkRemove (removeables) {
  * @param The bookmark to be stored
  */
 function saveBookmark (bookmark) {
-  bookmark.id = _uuid();
+  if (!bookmark.id || bookmark.id.length === 0) {
+    bookmark.id = _uuid();
+  }
 
   // For now we use local storage and switch to couchdb later on
   let bookmarks = {};
@@ -123,6 +125,15 @@ function saveBookmark (bookmark) {
     }
   });
   return true;
+}
+
+function setFilter (value) {
+  FauxtonAPI.dispatch({
+    type: ActionTypes.BOOKMARK_UPDATE_FILTER,
+    options: {
+      term: value
+    }
+  });
 }
 
 /**
@@ -143,5 +154,6 @@ export default {
   focusBookmark,
   deleteBookmark,
   saveBookmark,
-  bulkRemove
+  bulkRemove,
+  setFilter
 };

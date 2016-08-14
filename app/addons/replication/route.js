@@ -37,19 +37,22 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   defaultView: function (databaseName) {
     const sourceDatabase = databaseName || '';
     Actions.initReplicator(sourceDatabase);
-    Actions.switchTab('replication');
+    //Actions.switchTab('replication');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   },
   showAdvancedReplication: function () {
+    //Actions.switchTab('advanced-replication');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   },
   showBookmarks: function () {
-    this.setComponent('#right-header', Bookmark.BookmarkSearchInput);
+    //Actions.switchTab('bookmarks');
+    this.setComponent('#right-header', Bookmark.BookmarkHeader);
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   },
   showActivity: function () {
+    //Actions.switchTab('activity');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
   }
