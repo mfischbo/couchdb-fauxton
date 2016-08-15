@@ -243,19 +243,19 @@ class BookmarkTable extends React.Component {
           <tr key={bm.id}>
             <td>
               <div className="custom-inputs show-select">
-              <div className="checkbox inline">
-                <input
-                  id={bm.id}
-                  checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
-                  data-checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
-                  onChange={(e) => this.onSelected(bm.id)}
-                  type="checkbox"
-                  className="js-row-select"/>
-                <label
-                  className="label-checkbox-doclist"
-                  htmlFor={bm.id}/>
-              </div>
+                <div className="checkbox inline">
+                  <input
+                    id={bm.id}
+                    checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
+                    data-checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
+                    onChange={(e) => this.onSelected(bm.id)}
+                    type="checkbox"
+                    className="js-row-select"/>
+                  <label
+                    className="label-checkbox-doclist"
+                    htmlFor={bm.id}/>
                 </div>
+              </div>
             </td>
             <td>{bm.database}</td>
             <td>{bm.host}</td>
@@ -648,7 +648,10 @@ class AdvancedDatabaseSearch extends React.Component {
           value={this.state.term}
           onChange={(event) => this.onInputChange(event.target.value) }
           onBlur={(event) => this.onInputBlur()}
-        />
+          />
+        <div className="icon-container">
+          <i className="fonticon fonticon-search"></i>
+        </div>
         {suggestions}
       </div>
     );

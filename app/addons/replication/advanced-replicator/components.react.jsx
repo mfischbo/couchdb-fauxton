@@ -67,7 +67,7 @@ export default class AdvancedReplicationController extends React.Component {
     return (
       <div className="advanced-replicator-page">
         <div className="row-fluid">
-          <div className="span4">
+          <div className="span6">
             <SourcePane />
           </div>
           <div className="span6">
@@ -188,16 +188,16 @@ class DatabaseEntryRow extends React.Component {
 
     return (
       <div>
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Database</div>
-          <div className="span4">
+          <div className="span5">
             {databaseField}
           </div>
         </div>
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">{this.props.passwordLabel}</div>
-          <div className="span4">
+          <div className="span5">
             <input type="password" placeholder="Password"
               value={this.state.password || ''}
               onChange={(event) => this.onPasswordChange(event.target.value)}/>
@@ -268,9 +268,9 @@ class SourcePane extends React.Component {
     });
 
     return (
-      <div className="row">
+      <div className="row-fluid">
         <div className="span3">Filter</div>
-        <div className="span4">
+        <div className="span5">
           <StyledSelect
             selectContent={optionsList}
             selectId="replication-filter-select"
@@ -284,9 +284,9 @@ class SourcePane extends React.Component {
   createQueryParams () {
     if (this.state.filterFunction !== undefined && this.state.filterFunction.length > 0) {
       return (
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Query Parameters</div>
-          <div className="span4">
+          <div className="span5">
             <textarea placeholder="Query Parameters (optional)" disabled={this.state.filterFunction === ''}
               value={this.state.queryParameters}
               onChange={(e) => Actions.setSourceOption('queryParameters', e.target.value) }/>
@@ -321,21 +321,19 @@ class SourcePane extends React.Component {
 
     return (
       <div>
-
         {databases}
-
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Proxy URL</div>
-          <div className="span4">
+          <div className="span5">
             <input type="text" placeholder="Proxy server URL (if required)"
               value={this.state.proxyUrl}
               onChange={(e) => Actions.setSourceOption('proxyUrl', e.target.value)}/>
           </div>
         </div>
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Starting sequence</div>
-          <div className="span4">
+          <div className="span5">
             <input type="text" placeholder="Sequence number (optional)"
               value={this.state.startingSequence}
               onChange={(e) => Actions.setSourceOption('startingSequence', e.target.value) }/>
@@ -347,20 +345,28 @@ class SourcePane extends React.Component {
 
         {queryParams}
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Use Checkpoints</div>
-          <div className="span4">
-            <div className="checkbox-wrapper">
-              <input
-                type="checkbox"
-                checked={this.state.useCheckpoints === true}
-                data-checked={this.state.useCheckpoints === true}
-                onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints) }/>
+          <div className="span5">
+            <div className="custom-inputs show-select">
+              <div className="checkbox inline">
+                <input
+                  id="use-checkpoints-checkbox"
+                  checked={this.state.useCheckpoints}
+                  data-checked={this.state.useCheckpoints}
+                  onChange={(e) => Actions.setSourceOption('useCheckpoints', !this.state.useCheckpoints) }
+                  type="checkbox"
+                  className="js-row-select"/>
+                <label className="custom-checkbox" htmlFor="use-checkpoints-checkbox"/>
 
-              <input
-                type="number"
-                value={this.state.checkpointInterval}
-                onChange={(e) => Actions.setSourceOption('checkpointInterval', e.target.value)}/>
+                <input
+                  disabled={!this.state.useCheckpoints}
+                  min="0"
+                  className="checkpoint-interval-input"
+                  type="number"
+                  value={this.state.checkpointInterval}
+                  onChange={(e) => Actions.setSourceOption('checkpointInterval', e.target.value) }/>
+              </div>
             </div>
           </div>
         </div>
@@ -427,27 +433,45 @@ class TargetPane extends React.Component {
       <div className="row-fluid">
         {databaseRow}
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Continuous</div>
-          <div className="span7">
-            <input type="checkbox"
-              checked={this.state.continuous === true}
-              onChange={(e) => Actions.setTargetOption('continuous', !this.state.continuous) }/>
+          <div className="span5">
+            <div className="custom-inputs show-select">
+              <div className="checkbox inline target-pane">
+                <input type="checkbox"
+                  id="continuous-checkbox"
+                  checked={this.state.continuous}
+                  data-checked={this.state.continuous}
+                  onChange={(e) => Actions.setTargetOption('continuous', !this.state.continuous) }
+                  type="checkbox"
+                  className="js-row-select"/>
+                <label className="label-checkbox-doclist" htmlFor="continuous-checkbox"/>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Create Target</div>
-          <div className="span7">
-            <input type="checkbox"
-              checked={this.state.createTarget === true}
-              onChange={(e) => Actions.setTargetOption('createTarget', !this.state.createTarget)}/>
+          <div className="span5">
+            <div className="custom-inputs show-select">
+              <div className="checkbox inline target-pane">
+                <input type="checkbox"
+                  id="create-target-checkbox"
+                  checked={this.state.createTarget}
+                  data-checked={this.state.createTarget}
+                  onChange={(e) => Actions.setTargetOption('createTarget', !this.state.createTarget) }
+                  type="checkbox"
+                  className="js-row-select"/>
+                <label className="label-checkbox-doclist" htmlFor="create-target-checkbox"/>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="row">
+        <div className="row-fluid">
           <div className="span3">Replication ID</div>
-          <div className="span7">
+          <div className="span5">
             <input type="text" placeholder="Document ID (optional)"
               value={this.state.documentId}
               onChange={(e) => Actions.setTargetOption('documentId', e.target.value) }/>
