@@ -12,8 +12,18 @@
 
 @import "../../../../../../assets/less/variables.less";
 
+.icon-container {
+  position: absolute;
+  z-index:2;
+  margin-left: -28px;
+  margin-top: 14px;
+  font-size: 20px;
+  color:#999;
+}
+
 #dashboard-content .bookmarks-page {
     padding-top: 25px;
+    margin-bottom: 50px;
 }
 
 #dashboard-content .bookmark-form {
@@ -26,15 +36,11 @@
   margin: 17px 20px 17px 20px;
 }
 
+
 .bookmark-pagination {
   float: right;
 }
 
-.bookmark-footer {
-  position: absolute;
-  width:100%;
-  bottom:0;
-}
 
 .bookmarks-page td {
     padding: 8px;
@@ -112,14 +118,5 @@ th.sortable {
         background-color: #dd4043;
       }
     }
-  }
-
-  .icon-container {
-    position: absolute;
-    z-index:2;
-    margin-left: -28px;
-    margin-top: 14px;
-    font-size: 20px;
-    color:#999;
   }
 }

@@ -53,7 +53,6 @@ class BookmarksController extends React.Component {
     return (
       <div className="bookmarks-page">
         <BookmarkTable />
-        <BookmarkPagination page={this.state.page} />
       </div>
     );
   }
@@ -350,19 +349,39 @@ class BookmarkPagination extends React.Component {
 
   constructor (props) {
     super(props);
+    this.state = this.getStoreState();
   }
+
+  getStoreState() {
+    return {
+      page: store.getPage()
+    };
+  }
+
+  componentWillMount() {
+    store.on('change', this.onStoreChange, this);
+  }
+
+  componentWillUnmount() {
+    store.off('change', this.onStoreChange, this);
+  }
+
+  onStoreChange() {
+    this.setState(this.getStoreState());
+  }
+
 
   render () {
     return (
       <footer className="bookmark-footer pagination-footer">
         <div className="bookmark-pagination">
           <FauxtonComponentsReact.Pagination
-            page={this.props.page.currentPage + 1}
-            total={this.props.page.numberOfElements}
+            page={this.state.page.currentPage + 1}
+            total={this.state.page.numberOfElements}
             urlPrefix="#/bookmarks?page="/>
         </div>
         <div className="current-bookmarks">
-          Showing {this.props.page.firstElement} - {this.props.page.lastElement} of {this.props.page.numberOfElements} bookmarks
+          Showing {this.state.page.firstElement} - {this.state.page.lastElement} of {this.state.page.numberOfElements} bookmarks
         </div>
       </footer>
     );
@@ -492,6 +511,9 @@ class BookmarkSearchInput extends React.Component {
           value={this.state.filter}
           onChange={(e) => this.onChange(e.target.value) }
           placeholder="Search bookmark"/>
+        <div className="icon-container">
+          <i className="fonticon icon-search"></i>
+        </div>
       </div>
     );
   }
@@ -661,5 +683,6 @@ class AdvancedDatabaseSearch extends React.Component {
 export default {
   BookmarksController: BookmarksController,
   BookmarkHeader: BookmarkHeader,
+  BookmarkPagination: BookmarkPagination,
   AdvancedDatabaseSearch: AdvancedDatabaseSearch
 };

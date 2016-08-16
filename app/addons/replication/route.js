@@ -38,25 +38,29 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
   defaultView: function (databaseName) {
     const sourceDatabase = databaseName || '';
     Actions.initReplicator(sourceDatabase);
-    //Actions.switchTab('replication');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
+    this.removeComponent('#footer');
+    Actions.switchTab('replication');
   },
   showAdvancedReplication: function () {
-    //Actions.switchTab('advanced-replication');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
+    this.removeComponent('#footer');
+    Actions.switchTab('advanced-replication');
   },
   showBookmarks: function () {
-    //Actions.switchTab('bookmarks');
     BookmarkActions.initialize();
     this.setComponent('#right-header', Bookmark.BookmarkHeader);
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
+    this.setComponent('#footer', Bookmark.BookmarkPagination);
+    Actions.switchTab('bookmarks');
   },
   showActivity: function () {
-    //Actions.switchTab('activity');
     this.removeComponent('#right-header');
     this.setComponent('#dashboard-content', Components.ReplicationPageController);
+    this.removeComponent('#footer');
+    Actions.switchTab('activity');
   }
 });
 
