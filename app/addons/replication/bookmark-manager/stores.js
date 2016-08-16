@@ -115,7 +115,7 @@ const BookmarkStore = FauxtonAPI.Store.extend({
    * of elements
    */
   _updatePage (page) {
-    if (!page) {
+    if (page == undefined) {
       page = this._page.currentPage;
     }
     const cnt = Object.keys(this._bookmarks).length;
