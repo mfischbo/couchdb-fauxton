@@ -32,8 +32,7 @@ class BookmarksController extends React.Component {
 
   getStoreState() {
     return {
-      focusedBookmark: store.getFocusedBookmark(),
-      page: store.getPage()
+      focusedBookmark: store.getFocusedBookmark()
     };
   }
 
@@ -115,13 +114,18 @@ class BookmarkForm extends React.Component {
     }
 }
 
+
+/**
+ * Component to render a th-tag that allows the user to click on it and alter
+ * the sorting direction of the underlaying table column.
+ */
 class SortingTableHead extends React.Component {
 
-  constructor(props) {
+  constructor (props) {
     super(props);
   }
 
-  getSortingIcon() {
+  getSortingIcon () {
      if (this.props.sorting.property === this.props.property) {
       const clazz = this.props.sorting.direction === 'ASC' ? 'icon icon-caret-up' : 'icon icon-caret-down';
       return (<i className={clazz}></i>);
@@ -129,7 +133,7 @@ class SortingTableHead extends React.Component {
     return null;
   }
 
-  render() {
+  render () {
     const icon = this.getSortingIcon();
     return (
       <th className="sortable" onClick={this.props.callback}>
@@ -175,7 +179,7 @@ class BookmarkTable extends React.Component {
     };
   }
 
-  componentWillMount () {
+  componentDidMount () {
     store.on('change', this.onStoreChange, this);
   }
 
@@ -183,11 +187,19 @@ class BookmarkTable extends React.Component {
     store.off('change', this.onStoreChange, this);
   }
 
-  onStoreChange() {
+  onStoreChange () {
     this.setState(this.getStoreState());
   }
 
-  getPreparedModel() {
+
+  /**
+   * The method prepares the data model for being displayed on the UI.
+   * 1. Filter the list of bookmarks by the current filter term (if any)
+   * 2. Apply the given sorting criteria on the resulting list
+   * 3. Slice the resulting array into a length <= DEFAULT_PAGE_SIZE
+   * @return Array of bookmarks filtered, sorted and sliced correctly
+   */
+  getPreparedModel () {
 
     const bookmarks = [];
     const term = this.state.filter.term;
@@ -218,11 +230,15 @@ class BookmarkTable extends React.Component {
     if (this.sorting.direction === 'DESC') {
       bookmarks.reverse();
     }
-    return bookmarks;
+
+    // slice the resulting array to the given page size
+    const start = this.state.page.currentPage * FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
+    const len = start + FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
+    return  bookmarks.slice(start, len);
   }
 
-  createTableEntries() {
-    if (Object.keys(this.state.bookmarks).length == 0) {
+  createTableEntries () {
+    if (Object.keys(this.state.bookmarks).length === 0) {
       return (
         <tr>
           <td colSpan="5">No bookmarks available</td>
@@ -230,11 +246,7 @@ class BookmarkTable extends React.Component {
       );
     }
 
-    // calculate the current page offsets
-    const start = this.state.page.currentPage * FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
-    const len = start + FauxtonAPI.constants.MISC.DEFAULT_PAGE_SIZE;
-
-    const bookmarks = this.getPreparedModel().slice(start, len);
+    const bookmarks = this.getPreparedModel();
 
     return (
       bookmarks.map(bm => {
@@ -299,7 +311,7 @@ class BookmarkTable extends React.Component {
     Actions.bulkRemove(this.bulkOps.selectedItems);
   }
 
-  onToggleSelect() {
+  onToggleSelect () {
     this.bulkOps.isChecked = !this.bulkOps.isChecked;
     if (this.bulkOps.isChecked) {
       this.bulkOps.selectedItems = Object.keys(store.getBookmarks());

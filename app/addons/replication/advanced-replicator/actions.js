@@ -13,10 +13,12 @@
 import app from '../../../app';
 import FauxtonAPI from '../../../core/api';
 import ActionTypes from './actiontypes';
+import base64 from 'base-64';
 
 
 /**
- * Fetches all local available databases and notifies the store
+ * Fetches all local available databases and notifies the store.
+ * Creates a notification if the fetch operation failed.
  */
 function getLocalDatabases () {
   $.ajax({
@@ -116,41 +118,58 @@ function clear () {
  * @param Object containing the parameters for the replication
  * @return Object that (when represented as JSON) is understood by the CouchDB API
  */
-function _assembleReplicationRequest (job) {
+function _assembleReplicationRequest(job) {
   const retval = {};
-  retval.source = _createUrl(job.source.database);
+  debugger;
+  /*
+   * Check for authentication
+   */
+  const user = FauxtonAPI.session.user();
+  const username = _.isNull(user) ? '' : FauxtonAPI.session.user().name;
+  retval.user_ctx = {
+    name: username,
+    roles: ['_admin', '_reader', '_writer']
+  };
+
+  retval.source = {
+    url: _createUrl(job.source.database),
+    headers: _createAuthenticationHeaders(username, job.source.password)
+  };
 
   /*
    * Option specified on the replication source
    */
-  if (job.source.proxyUrl !== undefined && job.source.proxyUrl.length > 0) {
-    retval.proxy = job.source.proxyUrl;
+  if (job.source.options.proxyUrl !== undefined && job.source.options.proxyUrl.length > 0) {
+    retval.proxy = job.source.options.proxyUrl;
   }
 
-  if (job.source.startingSequence !== undefined && job.source.startingSequence.length > 0) {
-    retval.since_seq = job.source.startingSequence;
+
+  if (job.source.options.filter !== undefined && job.source.options.filter.length > 0) {
+    retval.filter = job.source.options.filter;
   }
 
-  if (job.source.filter !== undefined && job.source.filter.length > 0) {
-    retval.filter = job.source.filter;
+  if (job.source.options.queryParameters !== undefined &&
+    job.source.options.queryParameters.length > 0) {
+    retval.query_params = job.source.options.queryParameters;
   }
 
-  if (job.source.queryParameters !== undefined && job.source.queryParameters.length > 0) {
-    retval.query_params = job.source.queryParameters;
-  }
-
-  if (job.source.useCheckpoints) {
+  if (job.source.options.useCheckpoints) {
     retval.use_checkpoints = true;
   }
 
-  if (job.source.checkpointInterval !== undefined && job.source.checkpointInterval.length > 0) {
-    retval.checkpoint_interval = parseInt(job.source.checkpointInterval);
+  // TODO: Check if checkpoint_interval > 0
+  if (job.source.options.checkpointInterval !== undefined &&
+    job.source.options.checkpointInterval.length > 0) {
+    retval.checkpoint_interval = parseInt(job.source.options.checkpointInterval);
   }
 
   /*
-   * Options specified on the replication target
+   * Assemble the replication target
    */
-  retval.target = _createUrl(job.target.database);
+  retval.target = {
+    url: _createUrl(job.target.database),
+    headers: _createAuthenticationHeaders(username, job.target.password)
+  };
 
   if (job.target.continuous) {
     retval.continuous = true;
@@ -164,6 +183,7 @@ function _assembleReplicationRequest (job) {
     retval._id = job.target.documentId;
   }
 
+  console.log(retval);
   return retval;
 }
 
@@ -181,9 +201,22 @@ function _createUrl (database) {
   }
 
   // seems only the name of the database is given.
-  const retval = window.location.protocol + '://' + window.location.hostname
+  const retval = window.location.protocol + '//' + window.location.hostname
     + ':' + window.location.port + '/' + database;
   return retval;
+}
+
+
+/**
+ * Creates a base64 encoded basic authorization headers
+ * @param username The username to be encoded in the header
+ * @param password The password to be encoded in the header
+ * @return The HTTP Authorization header field in JSON format
+ */
+function _createAuthenticationHeaders (username, password) {
+  return {
+    'Authorization': 'Basic ' + base64.encode(username + ':' + password)
+  };
 }
 
 
@@ -200,7 +233,10 @@ function _retrieveFilterFunctions (result) {
     const doc = rows[i].doc;
     if (doc.filters != undefined) {
       for (let filter in doc.filters) {
-        filters.push(filter);
+
+        // strip the '_design/' prefix from the id
+        let id = doc._id.substring('_design/'.length);
+        filters.push({ id: id + '/' + filter, label: filter });
       }
     }
   }

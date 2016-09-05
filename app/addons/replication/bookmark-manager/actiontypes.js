@@ -12,9 +12,17 @@
 
 define([], function () {
   return {
+
+    // Actiontype to be used for initializing the bookmark store
     BOOKMARK_INIT: 'BOOKMARK_INIT',
+
+    // Signalizes the store that a bookmark is subject of being edited
     BOOKMARK_FOCUS_BOOKMARK: 'BOOKMARK_FOCUS_BOOKMARK',
+
+    // Signalizes that a change occoured in the list of known bookmarks
     BOOKMARK_UPDATE_BOOKMARKS: 'BOOKMARK_UPDATE_BOOKMARKS',
+
+    // signalizes that the search filter term has altered
     BOOKMARK_UPDATE_FILTER: 'BOOKMARK_UPDATE_FILTER'
   };
 });

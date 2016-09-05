@@ -48,7 +48,8 @@ export default class AdvancedReplicationController extends React.Component {
           startingSequence: store.getSourceOption('startingSequence'),
           filter: store.getSourceOption('filterFunction'),
           queryParameters: store.getSourceOption('queryParameters'),
-          useCheckpoints: store.getSourceOption('useCheckpoints')
+          useCheckpoints: store.getSourceOption('useCheckpoints'),
+          checkpointInterval: store.getSourceOption('checkpointInterval')
         }
       },
       target: {
@@ -109,7 +110,7 @@ class DatabaseEntryRow extends React.Component {
     this.onEntrySelected = this.onEntrySelected.bind(this);
   }
 
-  componentWillMount () {
+  componentDidMount () {
     store.on('change', this.onStoreChange, this);
   }
 
@@ -137,7 +138,11 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
-  onDatabaseChange(value) {
+  /**
+   * Handler to be triggered when the database selection is changed
+   *
+   */
+  onDatabaseChange (value) {
     if (this.props.type == 'SOURCE') {
       if (store.getLocalDatabases().indexOf(value) > -1) {
         Actions.updateFilterFunctions(value);
@@ -148,6 +153,11 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
+
+  /**
+   * Handler to be triggered whenever the password changes
+   * @param value The new password value
+   */
   onPasswordChange (value) {
     if (this.props.type == 'SOURCE') {
       Actions.setSourcePassword(value);
@@ -156,8 +166,14 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
+
+  /**
+   * Handler to be triggered when an entry from the AdvancedDatabaseSearch is selected.
+   * Checks if the entry is a local database and if so updates the filter functions.
+   * Further the new entry is propagated through an action to the store.
+   * @param entry The entry to be
+   */
   onEntrySelected (entry) {
-    console.log('Selection changed to ', entry);
     if (this.props.type === 'SOURCE') {
       if (entry.type === 'LOCAL' && store.getLocalDatabases().indexOf(entry.database) > -1) {
         Actions.updateFilterFunctions(entry.database);
@@ -168,11 +184,15 @@ class DatabaseEntryRow extends React.Component {
     }
   }
 
+
+  /**
+   * Internal helper method to create the AdvancedDatabaseSearch field.
+   * @return The correctly configured AdvancedDatabaseSearch field.
+   */
   createDatabaseField() {
     const bookmarks = [];
     for (let i in this.props.bookmarks)
       bookmarks.push(this.props.bookmarks[i]);
-
 
     return (
       <DatabaseSearch
@@ -183,6 +203,11 @@ class DatabaseEntryRow extends React.Component {
     );
   }
 
+
+  /**
+   * Renders the component.
+   * @return The element to be rendered into the DOM
+   */
   render() {
     const databaseField = this.createDatabaseField();
 
@@ -227,7 +252,6 @@ class SourcePane extends React.Component {
       bookmarks: bookmarkStore.getBookmarks(),
       filterFunctions: store.getAvailableFilterFunctions(store.getSourceDatabase()),
       proxyUrl: store.getSourceOption('proxyUrl'),
-      startingSequence: store.getSourceOption('startingSequence'),
       filterFunction: store.getSourceOption('filterFunction'),
       queryParameters: store.getSourceOption('queryParameters'),
       useCheckpoints: store.getSourceOption('useCheckpoints'),
@@ -239,7 +263,7 @@ class SourcePane extends React.Component {
     this.setState(this.getStoreState());
   }
 
-  componentWillMount () {
+  componentDidMount () {
     store.on('change', this.onStoreChange, this);
     bookmarkStore.on('change', this.onStoreChange, this);
   }
@@ -260,7 +284,7 @@ class SourcePane extends React.Component {
       { value: '', label: 'Please select' }
     ];
     this.state.filterFunctions.map(f => {
-      options.push({ value: f, label: f });
+      options.push({ value: f.id, label: f.label });
     });
 
     const optionsList = options.map(o => {
@@ -330,16 +354,6 @@ class SourcePane extends React.Component {
               onChange={(e) => Actions.setSourceOption('proxyUrl', e.target.value)}/>
           </div>
         </div>
-
-        <div className="row-fluid">
-          <div className="span3">Starting sequence</div>
-          <div className="span5">
-            <input type="text" placeholder="Sequence number (optional)"
-              value={this.state.startingSequence}
-              onChange={(e) => Actions.setSourceOption('startingSequence', e.target.value) }/>
-          </div>
-        </div>
-
 
         {filterField}
 
