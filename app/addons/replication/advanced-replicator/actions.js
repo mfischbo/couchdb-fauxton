@@ -73,6 +73,7 @@ function updateFilterFunctions (database) {
 
 /**
  * Starts the replication
+ * @param job The object containing all user defined properties for the replication
  */
 function startReplication(job) {
 

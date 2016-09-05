@@ -33,6 +33,9 @@ const TypeaheadField = Components.TypeaheadField;
 const StyledSelect = Components.StyledSelect;
 const DatabaseSearch = AdvancedDatabaseSearch.AdvancedDatabaseSearch;
 
+/**
+ * Root component for the advanced replication user interface
+ */
 export default class AdvancedReplicationController extends React.Component {
 
   /**
@@ -273,6 +276,10 @@ class SourcePane extends React.Component {
     bookmarkStore.off('change', this.onStoreChange, this);
   }
 
+  /**
+   * Creates the select widget containing the filter functions for the selected db.
+   * @return null if no functions are available or a select widget containing the functions
+   */
   createFilterField () {
     if (this.state.filterFunctions.length === 0 ||
       store.getSourceDatabase().length === 0 ||
@@ -305,6 +312,10 @@ class SourcePane extends React.Component {
     );
   }
 
+  /**
+   * Creates the input field widget to specify query parameters for the filter function
+   * @return null if no filter function has been selected. Otherwise the text input widget
+   */
   createQueryParams () {
     if (this.state.filterFunction !== undefined && this.state.filterFunction.length > 0) {
       return (
@@ -321,6 +332,9 @@ class SourcePane extends React.Component {
     return null;
   }
 
+  /**
+   * Creates the database row.
+   */
   createDatabaseRow () {
     // list of databases is loaded async so we need to ensure to have them
     // available when setting the props of the child component
