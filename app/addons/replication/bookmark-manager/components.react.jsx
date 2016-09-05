@@ -210,9 +210,9 @@ class BookmarkTable extends React.Component {
 
       // Apply the filter function if a term is set in filter.term
       if (term.length > 0) {
-        if (bookmark.host.startsWith(term) ||
-          bookmark.user.startsWith(term) ||
-          bookmark.database.startsWith(term)) {
+        if (bookmark.host.indexOf(term) > -1 ||
+          bookmark.user.indexOf(term) > -1 ||
+          bookmark.database.indexOf(term) > -1) {
 
           bookmarks.push(bookmark);
         }
@@ -225,8 +225,16 @@ class BookmarkTable extends React.Component {
     // apply sorting
     const that = this;
     bookmarks.sort(function (left, right) {
-      return left[that.sorting.property] > right[that.sorting.property];
+      if (left[that.sorting.property].toLowerCase() > right[that.sorting.property].toLowerCase()) {
+        return 1;
+      }
+      if (left[that.sorting.property].toLowerCase() < right[that.sorting.property].toLowerCase()) {
+        return -1;
+      }
+      return 0;
     });
+
+
     if (this.sorting.direction === 'DESC') {
       bookmarks.reverse();
     }
@@ -250,6 +258,8 @@ class BookmarkTable extends React.Component {
 
     return (
       bookmarks.map(bm => {
+        const checked = this.bulkOps.selectedItems.indexOf(bm.id.toString()) > -1;
+
         return (
           <tr key={bm.id}>
             <td>
@@ -257,8 +267,8 @@ class BookmarkTable extends React.Component {
                 <div className="checkbox inline">
                   <input
                     id={bm.id}
-                    checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
-                    data-checked={this.bulkOps.selectedItems.indexOf(bm.id) > -1}
+                    checked={checked}
+                    data-checked={checked}
                     onChange={(e) => this.onSelected(bm.id)}
                     type="checkbox"
                     className="js-row-select"/>
@@ -306,12 +316,10 @@ class BookmarkTable extends React.Component {
   }
 
   onBulkRemove () {
-    // TODO: Add a user confirmation here
-    debugger;
     Actions.bulkRemove(this.bulkOps.selectedItems);
   }
 
-  onToggleSelect () {
+  onToggleSelect() {
     this.bulkOps.isChecked = !this.bulkOps.isChecked;
     if (this.bulkOps.isChecked) {
       this.bulkOps.selectedItems = Object.keys(store.getBookmarks());
@@ -340,8 +348,8 @@ class BookmarkTable extends React.Component {
                 property="database" sorting={this.sorting}>Database</SortingTableHead>
               <SortingTableHead callback={() => this.onSortingChange('host') }
                 property="host"  sorting={this.sorting}>Remote URL</SortingTableHead>
-              <SortingTableHead callback={() => this.onSortingChange('username') }
-                property="username" sorting={this.sorting}>Remote User</SortingTableHead>
+              <SortingTableHead callback={() => this.onSortingChange('user') }
+                property="user" sorting={this.sorting}>Remote User</SortingTableHead>
               <th>Actions</th>
             </tr>
           </thead>
@@ -596,7 +604,7 @@ class AdvancedDatabaseSearch extends React.Component {
       return (
         <li className="bookmark-entry" key={db.id}
           onClick={() => this.onSelectEntry(db) }>
-          {db.database} at {db.host}
+          <nobr>{db.database} @ {db.host}</nobr>
         </li>
       );
     });

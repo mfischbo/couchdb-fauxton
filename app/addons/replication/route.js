@@ -25,7 +25,7 @@ var ReplicationRouteObject = FauxtonAPI.RouteObject.extend({
     'replication/:dbname': 'defaultView',
     'advanced-replication': 'showAdvancedReplication',
     'bookmarks': 'showBookmarks',
-    'activity': 'showActivity'
+    //'activity': 'showActivity'
   },
   selectedHeader: 'Replication',
   apiUrl: function () {

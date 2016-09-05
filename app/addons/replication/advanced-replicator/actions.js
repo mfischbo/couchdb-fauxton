@@ -94,8 +94,9 @@ function startReplication(job) {
       type: ActionTypes.REPLICATION_CLEAR_FORM
     });
     }, function (xhr) {
+      const txt = JSON.parse(xhr.responseText);
       FauxtonAPI.addNotification({
-        msg: 'Failed to start the replication.',
+        msg: 'Failed to start the replication. Reason: ' + txt.reason,
         type: 'error',
         clear: true
       });
@@ -116,11 +117,11 @@ function clear () {
  * The function assumes that all required job parameters are set and
  * checks for optional parameters only.
  * @param Object containing the parameters for the replication
- * @return Object that (when represented as JSON) is understood by the CouchDB API
+ * @return Object that (when represented as JSON) is a valid RequestBody to the /_replicator API
  */
 function _assembleReplicationRequest(job) {
   const retval = {};
-  debugger;
+
   /*
    * Check for authentication
    */
@@ -128,7 +129,7 @@ function _assembleReplicationRequest(job) {
   const username = _.isNull(user) ? '' : FauxtonAPI.session.user().name;
   retval.user_ctx = {
     name: username,
-    roles: ['_admin', '_reader', '_writer']
+    roles: ['_reader', '_writer']
   };
 
   retval.source = {
@@ -150,7 +151,7 @@ function _assembleReplicationRequest(job) {
 
   if (job.source.options.queryParameters !== undefined &&
     job.source.options.queryParameters.length > 0) {
-    retval.query_params = job.source.options.queryParameters;
+    retval.query_params = JSON.parse(job.source.options.queryParameters);
   }
 
   if (job.source.options.useCheckpoints) {
@@ -183,7 +184,6 @@ function _assembleReplicationRequest(job) {
     retval._id = job.target.documentId;
   }
 
-  console.log(retval);
   return retval;
 }
 

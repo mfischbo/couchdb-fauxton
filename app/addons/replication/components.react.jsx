@@ -108,7 +108,7 @@ ReplicatorTabs.defaultProps = {
     { id: 'replication', label: 'Simple Replication', href: 'replication'},
     { id: 'advanced-replication', label: 'Advanced Replication', href: 'advanced-replication'},
     { id: 'bookmarks', label: 'Bookmarks', href: 'bookmarks'},
-    { id: 'activity', label: 'Activity', href: 'activity'}
+    //{ id: 'activity', label: 'Activity', href: 'activity'}
   ]
 };
 
